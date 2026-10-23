@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portes - Strategy guide</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%233a2414'/%3E%3Cpath d='M10 6 L22 6 L16 58 Z' fill='%23a5622d'/%3E%3Cpath d='M42 6 L54 6 L48 58 Z' fill='%23a5622d'/%3E%3Ccircle cx='16' cy='14' r='9' fill='%23f4ead8' stroke='%23c9b796' stroke-width='2'/%3E%3Ccircle cx='16' cy='32' r='9' fill='%23f4ead8' stroke='%23c9b796' stroke-width='2'/%3E%3Ccircle cx='48' cy='14' r='9' fill='%233b2618' stroke='%231a0f08' stroke-width='2'/%3E%3Ccircle cx='48' cy='32' r='9' fill='%233b2618' stroke='%231a0f08' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+  :root { --gold:#e8b75a; --ink:#f3e9d8; --dim:#b6a78f; --glass:rgba(34,24,16,.72); --edge:rgba(255,226,170,.16);
+    --wood:#3a2415; --wood2:#24160c; --pa:#8a5a32; --pb:#d9c29a; --silver:#b9c3cc; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  html { background:#0b0807; }
+  body { margin:0; color:var(--ink); background:#0b0807 radial-gradient(ellipse 90% 60% at 50% 0%, #2a1a0f 0%, #0b0807 70%) no-repeat;
+    font:15px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  .wrap { max-width:880px; margin:0 auto; padding:max(20px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom)); }
+  .serif, h1, h2 { font-family:Georgia, "Times New Roman", serif; font-weight:600; }
+  a { color:var(--gold); }
+  header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin:8px 0 18px; }
+  h1 { margin:0; font-size:40px; line-height:1.05; letter-spacing:.01em; }
+  h1 small { display:block; font:400 13px "Segoe UI", system-ui, sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); margin-top:8px; }
+  .back { font-size:14px; color:var(--ink); text-decoration:none; border:1px solid var(--edge); background:rgba(255,235,200,.08);
+    border-radius:10px; padding:9px 16px; white-space:nowrap; }
+  .back:hover { background:rgba(255,235,200,.18); border-color:rgba(255,226,170,.4); }
+  .tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .lang { display:flex; border:1px solid var(--edge); border-radius:10px; overflow:hidden; }
+  .lang button { font:600 13px "Segoe UI", system-ui, sans-serif; letter-spacing:.06em; color:var(--dim); background:rgba(255,235,200,.05);
+    border:none; padding:9px 13px; cursor:pointer; }
+  .lang button + button { border-left:1px solid var(--edge); }
+  .lang button:hover { color:var(--ink); background:rgba(255,235,200,.14); }
+  .lang button.on { color:#2a1a06; background:linear-gradient(#f0c46e,#d79a32); }
+  .lede { color:#e6dccb; font-size:16.5px; max-width:68ch; margin:0 0 18px; }
+  .card { background:var(--glass); border:1px solid var(--edge); border-radius:14px; padding:20px 22px; margin:0 0 18px;
+    box-shadow:0 10px 40px rgba(0,0,0,.3); }
+  h2 { font-size:26px; margin:0 0 4px; }
+  .kicker { font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); margin:0 0 2px; }
+  h3 { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); margin:18px 0 6px; }
+  p { margin:8px 0; max-width:72ch; }
+  ul, ol { margin:8px 0; padding-left:22px; max-width:72ch; }
+  li { margin-bottom:6px; }
+  b { color:#fff4de; }
+  .num { color:var(--gold); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  nav { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 18px; }
+  nav a { font-size:13px; text-decoration:none; color:var(--dim); border:1px solid var(--edge); border-radius:999px; padding:4px 12px; }
+  nav a:hover { color:var(--ink); border-color:rgba(255,226,170,.4); }
+  .thumbs { counter-reset:t; list-style:none; padding:0; margin:6px 0 0; max-width:none; display:grid; gap:10px; }
+  .thumbs li { counter-increment:t; display:grid; grid-template-columns:34px 1fr; gap:12px; align-items:start; margin:0; }
+  .thumbs li::before { content:counter(t); font:600 20px Georgia, serif; color:#2a1a06; background:linear-gradient(#f0c46e,#d79a32);
+    width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.4); }
+  .fig { margin:14px 0 6px; overflow-x:auto; }
+  .fig svg { display:block; width:100%; min-width:520px; height:auto; }
+  .cap { font-size:12.5px; color:var(--dim); margin:4px 0 0; }
+  .legend { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:13px; color:var(--dim); margin-top:8px; }
+  .legend i { display:inline-block; width:22px; height:4px; border-radius:2px; vertical-align:middle; margin-right:6px; }
+  .facts { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin:12px 0 4px; }
+  .fact { border:1px solid var(--edge); border-radius:12px; padding:10px 12px; background:rgba(255,235,200,.04); }
+  .fact .big { font:600 28px/1.1 Georgia, serif; color:var(--gold); }
+  .fact .lbl { font-size:12.5px; color:var(--dim); line-height:1.4; margin-top:4px; }
+  .callout { border-left:3px solid var(--gold); background:rgba(232,183,90,.07); padding:10px 14px; border-radius:0 10px 10px 0; margin:12px 0; max-width:72ch; }
+  .callout.warn { border-left-color:#d9826c; background:rgba(200,90,60,.08); }
+  .bars { display:grid; grid-template-columns:auto 1fr auto; gap:6px 10px; align-items:center; max-width:620px; margin:12px 0 4px; font-size:13.5px; }
+  .bars .k { color:var(--dim); white-space:nowrap; }
+  .bars .track { height:16px; background:rgba(255,235,200,.06); border-radius:8px; overflow:hidden; }
+  .bars .fill { height:100%; border-radius:8px; background:linear-gradient(90deg, #a8722a, #f0c46e); }
+  .bars .fill.lo { background:linear-gradient(90deg, #6b4a3a, #b98b6e); }
+  .bars .v { font-variant-numeric:tabular-nums; text-align:right; min-width:7ch; }
+  .bars .v small { color:var(--dim); font-size:11px; }
+  footer { font-size:12.5px; color:var(--dim); margin-top:24px; }
+  footer p { max-width:none; }
+  @media (max-width:600px) {
+    h1 { font-size:32px; }
+    .card { padding:16px 14px; }
+    h2 { font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1><span data-lang="en">Πόρτες strategy<small>How to beat the Expert at Portes</small></span><span data-lang="el" hidden>Πόρτες: στρατηγική<small>Πώς να νικήσεις τον Expert</small></span></h1>
+  <div class="tools">
+    <div class="lang" role="group" aria-label="Language / Γλώσσα">
+      <button type="button" data-set-lang="en" title="English">EN</button><button type="button" data-set-lang="el" title="Ελληνικά">ΕΛ</button>
+    </div>
+    <a class="back" id="back" href="./"><span data-lang="en">← Back to the game</span><span data-lang="el" hidden>← Πίσω στο παιχνίδι</span></a>
+  </div>
+</header>
+
+<!-- ============================================================ ENGLISH -->
+<div data-lang="en">
+<p class="lede">Portes is the Greek backgammon: two points or more make a <b>door</b> the other side cannot pass, a lone checker
+can be <b>hit</b> back to the bar, and the first to bear off all fifteen wins — double if the loser has borne off none.
+The advice below comes from the game's own computer players: they played thousands of games against each other,
+and every figure is quoted with the sample it came from (see <a href="#method">how this was measured</a>).</p>
+
+<nav aria-label="Sections">
+  <a href="#thumbs">Rules of thumb</a><a href="#map">The board</a><a href="#hits">1 · Hitting</a>
+  <a href="#home">2 · Your home board</a><a href="#blots">3 · Blots</a><a href="#race">4 · The race</a>
+  <a href="#end">5 · How games end</a><a href="#learn">Learning in the app</a>
+</nav>
+
+<section class="card" id="thumbs">
+  <p class="kicker">In one minute</p>
+  <h2>Five rules of thumb</h2>
+  <ol class="thumbs">
+    <li><div><b>Hit first.</b> The side that makes the first hit of the game wins <span class="num" data-k="firstHitterWins">–</span>% of games.</div></li>
+    <li><div><b>Build your home board.</b> After ten turns each, a side holding five or more points of its home board wins <span class="num" data-k="homePointsAt10.5.win">–</span>%;
+      with only two, <span class="num" data-k="homePointsAt10.2.win">–</span>%.</div></li>
+    <li><div><b>Never get shut out.</b> A side that ever sat on the bar against a fully closed board won just <span class="num" data-k="shutOut.win">–</span>% of its games.</div></li>
+    <li><div><b>Count the race.</b> Once the checkers have passed each other, the side to roll wins <span class="num" data-k="raceLead.10.win">–</span>% when it leads by 10–19 pips
+      and <span class="num" data-k="raceLead.-10.win">–</span>% when it trails by 10–19.</div></li>
+    <li><div><b>Mind the mars.</b> <span class="num" data-k="ends.mars">–</span>% of games end in a mars, worth double: when you are far behind, get a checker off before the race is lost.</div></li>
+  </ol>
+</section>
+
+<section class="card" id="map">
+  <p class="kicker">Orientation</p>
+  <h2>The board from your seat</h2>
+  <p>The numbers are <b>your</b> points, as printed on the rails (Settings → Point numbers): your two back checkers start on 1, top right, and your home is 19–24, bottom right.
+  The computer comes the <b>other way round</b>: its back checkers start on your 24, bottom right — inside your home — and its home is your 1–6, where your back checkers stand.
+  Every one of your checkers meets every one of its checkers head-on, and a checker that is hit goes back to the bar and comes in again through the other side's home.</p>
+  <div class="fig" data-fig="boardMap"></div>
+  <div class="legend"><span><i style="background:var(--gold)"></i>your way round, 1 → 24, then off</span><span><i style="background:var(--silver)"></i>the computer's way round</span></div>
+</section>
+
+<section class="card" id="hits">
+  <p class="kicker">Chapter 1</p>
+  <h2>Hitting</h2>
+  <p>A hit costs the other side every pip its checker had already travelled, and its next roll goes first into coming back in. Strong players hit often —
+  about <span class="num" data-k="hitsPerGame">–</span> hits a game — and the side that hits first wins <span class="num" data-k="firstHitterWins">–</span>% of the time.</p>
+  <h3>Where to hit</h3>
+  <p>Every hit was worth having. Hits that sent a checker back from far along its way — 13–18 pips lost — paid best, but the hitter won well over half the games wherever the hit was made:</p>
+  <div class="bars" data-fig="hitWhere"></div>
+  <p class="cap">Win rate of the hitting side by how many pips the hit checker lost (every hit in the sample).</p>
+  <div class="callout">A hit that leaves your own checker alone in front of the bar is a gamble: the checker that comes in may hit you straight back. Hit with two checkers onto one point — "point on it" — when the dice allow.</div>
+</section>
+
+<section class="card" id="home">
+  <p class="kicker">Chapter 2</p>
+  <h2>Your home board</h2>
+  <p>A hit checker has to come in through your home board, so every point you close there is a door shut in its face.
+  After ten turns each, the more home points a side held, the more often it won:</p>
+  <div class="bars" data-fig="homeBars"></div>
+  <p class="cap">Win rate by the number of closed points in your own home board after your tenth turn (Advanced vs Advanced, <span data-k="games">–</span> games).</p>
+  <div class="facts">
+    <div class="fact"><div class="big"><span data-k="shutOut.win">–</span>%</div><div class="lbl">wins for a side that ever sat on the bar against a fully closed board</div></div>
+    <div class="fact"><div class="big"><span data-k="shutOut.share">–</span>%</div><div class="lbl">of all sides were shut out at least once</div></div>
+  </div>
+  <div class="callout warn">With four points closed the hit checker still gets in on 5 rolls in 9; with five, under 1 in 3; with six, never. Close the last door while the computer is on the bar and you play on alone.</div>
+</section>
+
+<section class="card" id="blots">
+  <p class="kicker">Chapter 3</p>
+  <h2>Blots</h2>
+  <p>One checker alone on a point is a blot, and a blot can be hit. Yet after ten turns each, sides with <b>no</b> blot in the computer's reach did not do best:</p>
+  <div class="bars" data-fig="blotBars"></div>
+  <p class="cap">Win rate by the number of your lone checkers the computer could reach (1–12 pips) after your tenth turn.</p>
+  <p>This measures association, not cause: the side with a blot or two in play is usually the one bringing builders down to make new points, while a side with nothing exposed has often run out of good moves.
+  Leave a blot when it builds something — a point in front of the computer's back checkers, a point in your home — and avoid it where the computer has many checkers right behind it.</p>
+</section>
+
+<section class="card" id="race">
+  <p class="kicker">Chapter 4</p>
+  <h2>The race</h2>
+  <p>When the last checkers have passed each other, nobody can be hit again and the game is a pure race: count the pips (the scoreboard shows them).
+  At the moment contact ended, the side to roll won:</p>
+  <div class="bars" data-fig="raceBars"></div>
+  <p class="cap">Win rate of the side to roll at the first position without contact, by its pip lead (its opponent's pips minus its own).</p>
+  <p>Having the roll is worth a few pips: the side to roll still won <span class="num" data-k="raceLead.-1.win">–</span>% when it trailed by 1–9. A lead of 10 pips or more is close to decisive; if you are behind by that much, keep contact — a back checker or two that can still hit — instead of racing.</p>
+</section>
+
+<section class="card" id="end">
+  <p class="kicker">Chapter 5</p>
+  <h2>How games end</h2>
+  <div class="bars" data-fig="endBars"></div>
+  <p class="cap">How the <span data-k="games">–</span> games of the sample ended. Average length: <span data-k="avgTurns">–</span> turns (both sides).</p>
+  <p>A mars (the loser has borne off nothing) counts double; there is no doubling cube and no triple win. The player who starts wins <span class="num" data-k="starterWins">–</span>% of games: the first move matters little.</p>
+</section>
+
+<section class="card" id="learn">
+  <p class="kicker">Practice</p>
+  <h2>Learning in the app</h2>
+  <ul>
+    <li><b>Learn</b> — nine short lessons, one rule each, on the real board.</li>
+    <li><b>Mr. Makis</b> (in a game) — plays the strongest move he finds and explains it: hits, points made, blots at risk, the race.</li>
+    <li><b>Puzzles</b> — positions from computer games where one move is clearly best, confirmed by hundreds of play-outs.</li>
+    <li><b>Review my mistakes</b> (after a game) — Mr. Makis finds your costliest moves and shows them in replay.</li>
+    <li><b>Settings → Show winning chances</b> — the odds of the board as it stands, so you see what a hit is worth.</li>
+  </ul>
+</section>
+
+<section class="card" id="method">
+  <p class="kicker">Method</p>
+  <h2>How this was measured</h2>
+  <p>Every figure comes from <span data-k="games">–</span> games of the Advanced computer level against itself (fixed dice seeds, so the numbers reproduce exactly):
+  <code>node test/strategy-stats.mjs <span data-k="games">–</span> <span data-k="level">–</span></code> in the game's source. They describe what wins between strong players, not rules; a figure measures association, not cause.</p>
+</section>
+</div>
+
+<!-- ============================================================ ΕΛΛΗΝΙΚΑ -->
+<div data-lang="el" lang="el" hidden>
+<p class="lede">Οι πόρτες είναι το ελληνικό τάβλι των χτυπημάτων: δύο ή περισσότερα πούλια σε ένα σημείο κάνουν <b>πόρτα</b> που ο αντίπαλος δεν περνά,
+ένα μοναχό πούλι μπορεί να <b>χτυπηθεί</b> και να βγει έξω, και όποιος μαζέψει πρώτος και τα δεκαπέντε κερδίζει — διπλό, αν ο χαμένος δεν έχει μαζέψει κανένα.
+Οι συμβουλές που ακολουθούν βγήκαν από τους υπολογιστές του ίδιου του παιχνιδιού: έπαιξαν χιλιάδες παρτίδες μεταξύ τους,
+και κάθε νούμερο δίνεται μαζί με το δείγμα του (δες <a href="#method-el">πώς μετρήθηκαν</a>).</p>
+
+<nav aria-label="Ενότητες">
+  <a href="#thumbs-el">Βασικοί κανόνες</a><a href="#map-el">Το ταμπλό</a><a href="#hits-el">1 · Χτυπήματα</a>
+  <a href="#home-el">2 · Το σπίτι σου</a><a href="#blots-el">3 · Μοναχά πούλια</a><a href="#race-el">4 · Η κούρσα</a>
+  <a href="#end-el">5 · Πώς τελειώνουν οι παρτίδες</a><a href="#learn-el">Μάθηση στην εφαρμογή</a>
+</nav>
+
+<section class="card" id="thumbs-el">
+  <p class="kicker">Σε ένα λεπτό</p>
+  <h2>Πέντε βασικοί κανόνες</h2>
+  <ol class="thumbs">
+    <li><div><b>Χτύπα πρώτος.</b> Όποιος κάνει το πρώτο χτύπημα της παρτίδας κερδίζει το <span class="num" data-k="firstHitterWins">–</span>% των παρτίδων.</div></li>
+    <li><div><b>Χτίσε το σπίτι σου.</b> Μετά από δέκα ζαριές ο καθένας, όποιος κρατά πέντε ή περισσότερες πόρτες στο σπίτι του κερδίζει το <span class="num" data-k="homePointsAt10.5.win">–</span>%·
+      με δύο μόνο, το <span class="num" data-k="homePointsAt10.2.win">–</span>%.</div></li>
+    <li><div><b>Μη μείνεις κλεισμένος έξω.</b> Όποιος βρέθηκε έστω και μία φορά έξω με το σπίτι του αντιπάλου εντελώς κλειστό κέρδισε μόλις το <span class="num" data-k="shutOut.win">–</span>% των παρτίδων του.</div></li>
+    <li><div><b>Μέτρα την κούρσα.</b> Όταν τα πούλια έχουν περάσει το ένα το άλλο, όποιος παίζει κερδίζει το <span class="num" data-k="raceLead.10.win">–</span>% όταν προηγείται 10–19 πόντους
+      και το <span class="num" data-k="raceLead.-10.win">–</span>% όταν υστερεί 10–19.</div></li>
+    <li><div><b>Πρόσεχε το μαρς.</b> Το <span class="num" data-k="ends.mars">–</span>% των παρτίδων τελειώνει με μαρς, που μετρά διπλό: όταν είσαι πολύ πίσω, μάζεψε ένα πούλι πριν χαθεί η κούρσα.</div></li>
+  </ol>
+</section>
+
+<section class="card" id="map-el">
+  <p class="kicker">Προσανατολισμός</p>
+  <h2>Το ταμπλό από τη θέση σου</h2>
+  <p>Τα νούμερα είναι <b>τα δικά σου</b> σημεία, όπως είναι τυπωμένα στο πλαίσιο (Settings → Point numbers): τα δύο πίσω πούλια σου ξεκινούν από το 1, πάνω δεξιά, και το σπίτι σου είναι το 19–24, κάτω δεξιά.
+  Ο υπολογιστής έρχεται από την <b>αντίθετη μεριά</b>: τα πίσω πούλια του ξεκινούν από το δικό σου 24, κάτω δεξιά — μέσα στο σπίτι σου — και το σπίτι του είναι το δικό σου 1–6, εκεί που στέκονται τα πίσω πούλια σου.
+  Κάθε πούλι σου συναντά κατά μέτωπο κάθε πούλι του, και ένα πούλι που χτυπιέται βγαίνει έξω και ξαναμπαίνει από το σπίτι του αντιπάλου.</p>
+  <div class="fig" data-fig="boardMap"></div>
+  <div class="legend"><span><i style="background:var(--gold)"></i>η δική σου διαδρομή, 1 → 24 και έξω</span><span><i style="background:var(--silver)"></i>η διαδρομή του υπολογιστή</span></div>
+</section>
+
+<section class="card" id="hits-el">
+  <p class="kicker">Κεφάλαιο 1</p>
+  <h2>Χτυπήματα</h2>
+  <p>Ένα χτύπημα κοστίζει στον αντίπαλο όλους τους πόντους που είχε ήδη διανύσει το πούλι του, και η επόμενη ζαριά του πηγαίνει πρώτα στο να ξαναμπεί. Οι δυνατοί παίκτες χτυπούν συχνά —
+  περίπου <span class="num" data-k="hitsPerGame">–</span> χτυπήματα την παρτίδα — και όποιος χτυπά πρώτος κερδίζει το <span class="num" data-k="firstHitterWins">–</span>% των φορών.</p>
+  <h3>Πού να χτυπάς</h3>
+  <p>Κάθε χτύπημα άξιζε. Όσα έστειλαν πίσω ένα πούλι που είχε ήδη κάνει πολύ δρόμο — 13–18 πόντοι χαμένοι — απέδωσαν περισσότερο, αλλά όποιος χτύπησε κέρδισε πάνω από τις μισές παρτίδες όπου κι αν έγινε το χτύπημα:</p>
+  <div class="bars" data-fig="hitWhere"></div>
+  <p class="cap">Ποσοστό νίκης της πλευράς που χτύπησε, ανάλογα με το πόσους πόντους έχασε το χτυπημένο πούλι (κάθε χτύπημα του δείγματος).</p>
+  <div class="callout">Ένα χτύπημα που αφήνει το δικό σου πούλι μόνο μπροστά στο πούλι που βγήκε έξω είναι ρίσκο: όταν ξαναμπεί, μπορεί να σε χτυπήσει αμέσως. Χτύπα με δύο πούλια στο ίδιο σημείο — κλείνοντας πόρτα πάνω του — όποτε το επιτρέπουν τα ζάρια.</div>
+</section>
+
+<section class="card" id="home-el">
+  <p class="kicker">Κεφάλαιο 2</p>
+  <h2>Το σπίτι σου</h2>
+  <p>Ένα χτυπημένο πούλι ξαναμπαίνει από το σπίτι σου, οπότε κάθε πόρτα που κλείνεις εκεί του κλείνει τον δρόμο.
+  Μετά από δέκα ζαριές ο καθένας, όσο περισσότερες πόρτες κρατούσε κάποιος στο σπίτι του, τόσο συχνότερα κέρδιζε:</p>
+  <div class="bars" data-fig="homeBars"></div>
+  <p class="cap">Ποσοστό νίκης ανάλογα με τις κλειστές πόρτες στο σπίτι σου μετά τη δέκατη ζαριά σου (Advanced εναντίον Advanced, <span data-k="games">–</span> παρτίδες).</p>
+  <div class="facts">
+    <div class="fact"><div class="big"><span data-k="shutOut.win">–</span>%</div><div class="lbl">νίκες για όποιον βρέθηκε έστω και μία φορά έξω με το σπίτι του αντιπάλου εντελώς κλειστό</div></div>
+    <div class="fact"><div class="big"><span data-k="shutOut.share">–</span>%</div><div class="lbl">των παικτών έμειναν κλεισμένοι έξω τουλάχιστον μία φορά</div></div>
+  </div>
+  <div class="callout warn">Με τέσσερις πόρτες κλειστές, το χτυπημένο πούλι ξαναμπαίνει ακόμη με 5 ζαριές στις 9· με πέντε, με λιγότερες από 1 στις 3· με έξι, ποτέ. Κλείσε την τελευταία πόρτα όσο ο υπολογιστής είναι έξω και παίζεις μόνος σου.</div>
+</section>
+
+<section class="card" id="blots-el">
+  <p class="kicker">Κεφάλαιο 3</p>
+  <h2>Μοναχά πούλια</h2>
+  <p>Ένα πούλι μόνο του σε ένα σημείο μπορεί να χτυπηθεί. Κι όμως, μετά από δέκα ζαριές ο καθένας, όσοι δεν είχαν <b>κανένα</b> μοναχό πούλι στο βεληνεκές του υπολογιστή δεν τα πήγαν καλύτερα:</p>
+  <div class="bars" data-fig="blotBars"></div>
+  <p class="cap">Ποσοστό νίκης ανάλογα με το πόσα μοναχά πούλια σου μπορούσε να φτάσει ο υπολογιστής (1–12 πόντοι) μετά τη δέκατη ζαριά σου.</p>
+  <p>Αυτό μετρά συσχέτιση, όχι αιτία: όποιος έχει ένα-δυο μοναχά πούλια στο παιχνίδι είναι συνήθως αυτός που φέρνει πούλια για να κλείσει νέες πόρτες, ενώ όποιος δεν έχει τίποτα εκτεθειμένο συχνά έχει ξεμείνει από καλές κινήσεις.
+  Άφησε μοναχό πούλι όταν χτίζει κάτι — μια πόρτα μπροστά στα πίσω πούλια του υπολογιστή, μια πόρτα στο σπίτι σου — και απόφυγέ το εκεί που ο υπολογιστής έχει πολλά πούλια ακριβώς από πίσω του.</p>
+</section>
+
+<section class="card" id="race-el">
+  <p class="kicker">Κεφάλαιο 4</p>
+  <h2>Η κούρσα</h2>
+  <p>Όταν τα τελευταία πούλια περάσουν το ένα το άλλο, κανείς δεν μπορεί πια να χτυπηθεί και η παρτίδα γίνεται καθαρή κούρσα: μέτρα τους πόντους (τους δείχνει ο πίνακας).
+  Τη στιγμή που τελείωσε η επαφή, όποιος έπαιζε κέρδισε:</p>
+  <div class="bars" data-fig="raceBars"></div>
+  <p class="cap">Ποσοστό νίκης όποιου παίζει στην πρώτη θέση χωρίς επαφή, ανάλογα με το προβάδισμά του σε πόντους (οι πόντοι του αντιπάλου μείον οι δικοί του).</p>
+  <p>Το να έχεις τη ζαριά αξίζει μερικούς πόντους: όποιος έπαιζε κέρδισε ακόμη το <span class="num" data-k="raceLead.-1.win">–</span>% ενώ υστερούσε 1–9. Προβάδισμα 10 πόντων ή περισσότερο είναι σχεδόν οριστικό· αν είσαι τόσο πίσω, κράτα επαφή — ένα-δυο πίσω πούλια που μπορούν ακόμη να χτυπήσουν — αντί να τρέχεις.</p>
+</section>
+
+<section class="card" id="end-el">
+  <p class="kicker">Κεφάλαιο 5</p>
+  <h2>Πώς τελειώνουν οι παρτίδες</h2>
+  <div class="bars" data-fig="endBars"></div>
+  <p class="cap">Πώς τελείωσαν οι <span data-k="games">–</span> παρτίδες του δείγματος. Μέση διάρκεια: <span data-k="avgTurns">–</span> ζαριές (και των δύο).</p>
+  <p>Το μαρς (ο χαμένος δεν έχει μαζέψει κανένα πούλι) μετρά διπλό· δεν υπάρχει κύβος διπλασιασμού ούτε τριπλή νίκη. Όποιος παίζει πρώτος κερδίζει το <span class="num" data-k="starterWins">–</span>% των παρτίδων: η πρώτη κίνηση μετρά λίγο.</p>
+</section>
+
+<section class="card" id="learn-el">
+  <p class="kicker">Εξάσκηση</p>
+  <h2>Μάθηση στην εφαρμογή</h2>
+  <ul>
+    <li><b>Learn</b> — εννέα σύντομα μαθήματα, ένας κανόνας το καθένα, πάνω στο ταμπλό.</li>
+    <li><b>Mr. Makis</b> (μέσα στην παρτίδα) — παίζει την καλύτερη κίνηση που βρίσκει και την εξηγεί: χτυπήματα, πόρτες, μοναχά πούλια σε κίνδυνο, η κούρσα.</li>
+    <li><b>Puzzles</b> — θέσεις από παρτίδες υπολογιστών όπου μία κίνηση είναι καθαρά η καλύτερη, επιβεβαιωμένη με εκατοντάδες προσομοιώσεις.</li>
+    <li><b>Review my mistakes</b> (μετά την παρτίδα) — ο Mr. Makis βρίσκει τις ακριβότερες κινήσεις σου και τις δείχνει στην επανάληψη.</li>
+    <li><b>Settings → Show winning chances</b> — οι πιθανότητες της θέσης όπως είναι, για να βλέπεις πόσο αξίζει ένα χτύπημα.</li>
+  </ul>
+</section>
+
+<section class="card" id="method-el">
+  <p class="kicker">Μέθοδος</p>
+  <h2>Πώς μετρήθηκαν</h2>
+  <p>Κάθε νούμερο βγαίνει από <span data-k="games">–</span> παρτίδες του επιπέδου Advanced εναντίον του εαυτού του (σταθερά ζάρια, ώστε τα νούμερα να αναπαράγονται ακριβώς):
+  <code>node test/strategy-stats.mjs <span data-k="games">–</span> <span data-k="level">–</span></code> στον κώδικα του παιχνιδιού. Περιγράφουν τι κερδίζει ανάμεσα σε δυνατούς παίκτες, όχι κανόνες· ένα νούμερο μετρά συσχέτιση, όχι αιτία.</p>
+</section>
+</div>
+
+<footer>
+  <p data-lang="en">Portes · <a href="./">portes.vichos.org</a> · also <a href="https://plakoto.vichos.org">Plakoto</a> and <a href="https://fevga.vichos.org">Fevga</a></p>
+  <p data-lang="el" hidden>Πόρτες · <a href="./">portes.vichos.org</a> · και <a href="https://plakoto.vichos.org">Πλακωτό</a>, <a href="https://fevga.vichos.org">Φεύγα</a></p>
+</footer>
+</div>
+
+<script>
+// Back: when the game opened this page in a new tab, close it so the game tab (and its state) is where you return.
+// Inside an app frame the guide is a sheet over the game (an iframe): ask the game to close it.
+document.getElementById('back').addEventListener('click', (e) => {
+  if (window.parent !== window) { e.preventDefault(); window.parent.postMessage('portes:close-strategy', location.origin); return; }
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); }
+});
+
+// The measured figures: the output of `node test/strategy-stats.mjs 3000 4`, pasted verbatim.
+// test/strategy-check.mjs reruns the script and fails if this block differs.
+const DATA = /*DATA*/{"games":3000,"level":4,"avgTurns":52.8,"hitsPerGame":5.1,"ends":{"single":78.4,"mars":21.6,"unfinished":0},"starterWins":52.3,"firstHitterWins":61.2,"hitWinByPipsLost":{"1-6":{"hits":4387,"hitterWins":57.7},"7-12":{"hits":4586,"hitterWins":58.4},"13-18":{"hits":2947,"hitterWins":63.3},"19-24":{"hits":3318,"hitterWins":59.5}},"homePointsAt10":{"1":{"n":74,"win":36.5},"2":{"n":499,"win":38.7},"3":{"n":1857,"win":44.6},"4":{"n":2651,"win":52.5},"5":{"n":919,"win":61}},"loneCheckersAt10":{"0":{"n":3092,"win":45.9},"1":{"n":1983,"win":53.5},"2":{"n":764,"win":57.1},"3":{"n":147,"win":53.7},"4":{"n":14,"win":35.7}},"shutOut":{"sides":280,"share":4.7,"win":5.7},"raceLead":{"0":{"n":240,"win":84.2},"10":{"n":327,"win":96.3},"20":{"n":1368,"win":99.6},"-20":{"n":625,"win":3.4},"-10":{"n":194,"win":30.9},"-1":{"n":168,"win":48.2}}}/*/DATA*/;
+
+const get = (path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), DATA);
+const fmt = (x, lang) => (typeof x === 'number' ? x.toLocaleString(lang === 'el' ? 'el' : 'en', { maximumFractionDigits: 1 }) : '–');
+
+const NS = 'http://www.w3.org/2000/svg';
+const el = (tag, attrs, text) => {
+  const n = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) n.setAttribute(k, v);
+  if (text != null) n.textContent = text;
+  return n;
+};
+const RACE = ['20', '10', '0', '-1', '-10', '-20']; // lead buckets, best first
+const T = {
+  en: { youStart: 'your back checkers (1)', youHome: 'your home 19–24', cpuStart: "computer's back checkers (your 24)", cpuHome: "computer's home (your 1–6)",
+    home: (k) => (k >= 5 ? '5–6 points' : `${k} point${k === 1 ? '' : 's'}`), lone: (k) => `${k} blot${k === 1 ? '' : 's'}`, lost: (b) => `${b} pips lost`, nOf: (n) => `${n} hits`,
+    race: { 20: 'ahead 20+', 10: 'ahead 10–19', 0: 'ahead 0–9', '-1': 'behind 1–9', '-10': 'behind 10–19', '-20': 'behind 20+' },
+    ends: { single: 'single win', mars: 'mars (double)' } },
+  el: { youStart: 'τα πίσω πούλια σου (1)', youHome: 'το σπίτι σου 19–24', cpuStart: 'πίσω πούλια υπολογιστή (το 24 σου)', cpuHome: 'σπίτι υπολογιστή (το 1–6 σου)',
+    home: (k) => (k >= 5 ? '5–6 πόρτες' : `${k} πόρτ${k === 1 ? 'α' : 'ες'}`), lone: (k) => `${k} μοναχά`, lost: (b) => `${b} πόντοι χαμένοι`, nOf: (n) => `${n} χτυπήματα`,
+    race: { 20: 'μπροστά 20+', 10: 'μπροστά 10–19', 0: 'μπροστά 0–9', '-1': 'πίσω 1–9', '-10': 'πίσω 10–19', '-20': 'πίσω 20+' },
+    ends: { single: 'απλή νίκη', mars: 'μαρς (διπλό)' } },
+};
+
+// the board from the player's seat (as the game draws it): points 1-12 along the far rail (right to
+// left, back checkers top right), 13-24 along the near rail (left to right, home bottom right).
+// Points, lanes and checkers are drawn in the old bottom-left-start layout inside a group turned
+// 180 degrees (`g`); only the text is placed directly, so it stays upright.
+function boardMap(host, lang) {
+  const t = T[lang], W = 640, H = 390;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `${t.youStart}, ${t.youHome}, ${t.cpuStart}, ${t.cpuHome}` });
+  const fy0 = 36, fy1 = H - 36; // the board frame; region labels sit in the margins above and below
+  svg.append(el('rect', { x: 10, y: fy0, width: W - 20, height: fy1 - fy0, rx: 14, fill: 'var(--wood)', stroke: '#1a0f08', 'stroke-width': 3 }));
+  const pw = 44, x0 = 30, bar = 20, top = fy0 + 22, len = 92, bottom = fy1 - 22;
+  const px = (k) => x0 + k * pw + (k >= 6 ? bar : 0) + pw / 2; // k = 0..11 from the left (before the turn)
+  const g = el('g', { transform: `rotate(180 ${W / 2} ${H / 2})` });
+  svg.append(g);
+  for (let k = 0; k < 12; k++) {
+    const cx = px(k);
+    g.append(el('path', { d: `M${cx - pw / 2 + 2} ${top}L${cx + pw / 2 - 2} ${top}L${cx} ${top + len}Z`, fill: k % 2 ? 'var(--pa)' : 'var(--pb)', opacity: 0.85 }));
+    g.append(el('path', { d: `M${cx - pw / 2 + 2} ${bottom}L${cx + pw / 2 - 2} ${bottom}L${cx} ${bottom - len}Z`, fill: k % 2 ? 'var(--pb)' : 'var(--pa)', opacity: 0.85 }));
+    // after the turn: far rail 12 on the left ... 1 on the right; near rail 13 on the left ... 24 on the right
+    svg.append(el('text', { x: W - cx, y: top - 7, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--dim)' }, String(1 + k)));
+    svg.append(el('text', { x: W - cx, y: bottom + 16, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--dim)' }, String(24 - k)));
+  }
+  const defs = el('defs');
+  for (const [id, c] of [['mg', '#e8b75a'], ['ms', '#b9c3cc']]) {
+    const m = el('marker', { id, viewBox: '0 0 10 10', refX: 6, refY: 5, markerWidth: 4, markerHeight: 4, orient: 'auto' });
+    m.append(el('path', { d: 'M0 0L10 5L0 10Z', fill: c }));
+    defs.append(m);
+  }
+  svg.prepend(defs);
+  const arrow = (d, color, id) => g.append(el('path', { d, fill: 'none', stroke: color, 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'marker-end': `url(#${id})` }));
+  // four lanes between the point tips: yours on the outside, the computer's inside
+  const yA = top + len + 14, yB = top + len + 32, yC = bottom - len - 32, yD = bottom - len - 14;
+  const L = px(0) - 8, Rr = px(11) + 4;
+  // (before the turn) yours: from 1 rightwards, round the right end, then leftwards to 24 and off -
+  // on screen: from 1 top right leftwards, round the left end, rightwards to 24 bottom right
+  arrow(`M${L} ${yD}L${Rr - 26} ${yD}Q${Rr + 6} ${yD} ${Rr + 6} ${(yA + yD) / 2}Q${Rr + 6} ${yA} ${Rr - 26} ${yA}L${L} ${yA}`, '#e8b75a', 'mg');
+  // the computer's: on screen from your 24 (bottom right) leftwards, round the left end, rightwards to your 1-6 and off
+  arrow(`M${L + 4} ${yB}L${Rr - 40} ${yB}Q${Rr - 16} ${yB} ${Rr - 16} ${(yB + yC) / 2}Q${Rr - 16} ${yC} ${Rr - 40} ${yC}L${L + 4} ${yC}`, '#b9c3cc', 'ms');
+  // the two back checkers of each side on their first point
+  for (const dx of [-5, 5]) {
+    g.append(el('circle', { cx: px(0) + dx, cy: bottom - 12, r: 8, fill: '#f4ead8', stroke: '#e8b75a', 'stroke-width': 2 }));
+    g.append(el('circle', { cx: px(0) + dx, cy: top + 12, r: 8, fill: '#3b2618', stroke: '#b9c3cc', 'stroke-width': 2 }));
+  }
+  // region labels in the margins, over / under the right half (after the turn)
+  const half = W - (px(0) + px(5)) / 2;
+  const two = (y, a, ca, b, cb) => {
+    const tx = el('text', { x: half, y, 'text-anchor': 'middle', 'font-size': 12.5, 'font-weight': 600 });
+    tx.append(el('tspan', { fill: ca }, a), el('tspan', { fill: 'var(--dim)' }, '  ·  '), el('tspan', { fill: cb }, b));
+    svg.append(tx);
+  };
+  two(22, t.youStart, '#e8b75a', t.cpuHome, '#b9c3cc');
+  two(H - 12, t.youHome, '#e8b75a', t.cpuStart, '#b9c3cc');
+  host.append(svg);
+}
+
+function bars(host, lang, rows) { // rows: [[label, value 0..100, sub, low?]]
+  for (const [k, v, sub, low] of rows) {
+    const kk = document.createElement('div'); kk.className = 'k'; kk.textContent = k;
+    const tr = document.createElement('div'); tr.className = 'track';
+    const f = document.createElement('div'); f.className = 'fill' + (low ? ' lo' : ''); f.style.width = `${Math.max(0, Math.min(100, v))}%`;
+    tr.append(f);
+    const vv = document.createElement('div'); vv.className = 'v'; vv.innerHTML = `${fmt(v, lang)}%${sub ? ` <small>${sub}</small>` : ''}`;
+    host.append(kk, tr, vv);
+  }
+}
+
+function draw(host, fig, lang) {
+  const t = T[lang];
+  host.textContent = '';
+  if (fig === 'boardMap') boardMap(host, lang);
+  else if (fig === 'hitWhere') bars(host, lang, Object.entries(DATA.hitWinByPipsLost || {}).map(([k, x]) => [t.lost(k), x.hitterWins, t.nOf(x.hits)]));
+  else if (fig === 'homeBars') bars(host, lang, Object.entries(DATA.homePointsAt10 || {}).filter(([, x]) => x.n >= 100).sort((a, b) => +b[0] - +a[0]).map(([k, x]) => [t.home(+k), x.win, `n=${x.n}`, x.win < 50]));
+  else if (fig === 'blotBars') bars(host, lang, Object.entries(DATA.loneCheckersAt10 || {}).filter(([, x]) => x.n >= 100).map(([k, x]) => [t.lone(+k), x.win, `n=${x.n}`, x.win < 50]));
+  else if (fig === 'raceBars') bars(host, lang, RACE.filter((k) => (DATA.raceLead || {})[k]).map((k) => [t.race[k], DATA.raceLead[k].win, `n=${DATA.raceLead[k].n}`, +k < 0]));
+  else if (fig === 'endBars') bars(host, lang, ['single', 'mars'].map((k) => [t.ends[k], (DATA.ends || {})[k], '', false]));
+}
+
+function render(lang) {
+  for (const n of document.querySelectorAll(`[data-lang="${lang}"] [data-k], footer [data-k]`)) n.textContent = fmt(get(n.dataset.k), lang);
+  for (const host of document.querySelectorAll(`[data-lang="${lang}"] [data-fig]`)) if (!host.dataset.drawn) { draw(host, host.dataset.fig, lang); host.dataset.drawn = '1'; }
+}
+
+// Language: ?lang=el|en wins, then the last choice on this browser, then the browser's own language.
+const TITLES = { en: 'Portes - Strategy guide', el: 'Πόρτες - Οδηγός στρατηγικής' };
+function setLang(lang, remember) {
+  for (const n of document.querySelectorAll('[data-lang]')) n.hidden = n.dataset.lang !== lang;
+  for (const b of document.querySelectorAll('[data-set-lang]')) {
+    b.classList.toggle('on', b.dataset.setLang === lang);
+    b.setAttribute('aria-pressed', b.dataset.setLang === lang);
+  }
+  document.documentElement.lang = lang;
+  document.title = TITLES[lang];
+  render(lang);
+  if (remember) try { localStorage.setItem('portes.strategy.lang', lang); } catch {}
+}
+for (const b of document.querySelectorAll('[data-set-lang]')) b.addEventListener('click', () => setLang(b.dataset.setLang, true));
+let initial = new URLSearchParams(location.search).get('lang');
+if (!T[initial]) { try { initial = localStorage.getItem('portes.strategy.lang'); } catch { initial = null; } }
+if (!T[initial]) initial = (navigator.language || '').toLowerCase().startsWith('el') ? 'el' : 'en';
+setLang(initial, false);
+if (location.hash) {
+  const id = location.hash.slice(1).replace(/-el$/, '');
+  const target = document.getElementById(initial === 'el' ? `${id}-el` : id);
+  if (target) target.scrollIntoView();
+}
+</script>
+</body>
+</html>

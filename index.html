@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portes - Greek Backgammon</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%233a2414'/%3E%3Cpath d='M10 6 L22 6 L16 58 Z' fill='%23a5622d'/%3E%3Cpath d='M42 6 L54 6 L48 58 Z' fill='%23a5622d'/%3E%3Ccircle cx='16' cy='14' r='9' fill='%23f4ead8' stroke='%23c9b796' stroke-width='2'/%3E%3Ccircle cx='16' cy='32' r='9' fill='%23f4ead8' stroke='%23c9b796' stroke-width='2'/%3E%3Ccircle cx='48' cy='14' r='9' fill='%233b2618' stroke='%231a0f08' stroke-width='2'/%3E%3Ccircle cx='48' cy='32' r='9' fill='%233b2618' stroke='%231a0f08' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+  :root { --gold:#e8b75a; --ink:#f3e9d8; --dim:#b6a78f; --glass:rgba(22,15,10,.66); --edge:rgba(255,226,170,.16); }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; } /* panels below set display:flex, which would beat the attribute */
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  html, body { margin:0; height:100%; background:#0b0807; color:var(--ink); overflow:hidden;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif; -webkit-user-select:none; user-select:none; }
+  #scene { position:fixed; inset:0; width:100vw; height:100vh; display:block; touch-action:none; }
+  /* photographic vignette over the render */
+  #vignette { position:fixed; inset:0; pointer-events:none;
+    background: radial-gradient(ellipse 75% 70% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.45) 100%); }
+  /* retro lamp: a tighter, darker vignette that pulls the eye onto the lit board; cross-faded
+     (gradients themselves cannot transition) so it darkens with the room as the bulb comes on */
+  #vignette::after { content:''; position:absolute; inset:0; opacity:0; transition:opacity .8s ease;
+    background: radial-gradient(ellipse 58% 60% at 50% 52%, rgba(0,0,0,0) 45%, rgba(0,0,0,.55) 80%, rgba(0,0,0,.85) 100%); }
+  #vignette.lamp::after { opacity:1; }
+  .serif { font-family: Georgia, "Times New Roman", serif; }
+  .panel { background:var(--glass); border:1px solid var(--edge); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius:14px; box-shadow: 0 10px 40px rgba(0,0,0,.35); }
+
+  #brand { position:fixed; top:max(16px, env(safe-area-inset-top)); left:16px; padding:12px 16px 14px; width:min(360px, calc(100vw - 32px)); }
+  #brand h1 { margin:0; font-size:30px; font-weight:600; letter-spacing:.02em; line-height:1.05; }
+  #brand h1 small { font-size:13px; color:var(--dim); font-family:"Segoe UI", system-ui, sans-serif; font-weight:400; letter-spacing:.06em; margin-left:6px; }
+  #brand .row { display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+  #brand label { font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); width:100%; margin-bottom:-4px; }
+  select { font:inherit; font-size:14px; color:var(--ink); background:rgba(255,235,200,.08); border:1px solid var(--edge);
+    border-radius:10px; padding:8px 10px; cursor:pointer; flex:1; min-width:0; }
+  select option { background:#21170f; color:var(--ink); }
+  #menuBtn { display:none; }
+  #brandMenu { display:contents; } /* a dropdown on phones only (see the max-width:700px block) */
+  /* the seven menu buttons in a tidy grid: three equal columns, the last one full width, edge to edge */
+  #brand #menuRow { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+  #brand #menuRow button { min-width:0; padding-left:4px; padding-right:4px; white-space:nowrap; }
+  #brand #menuRow #puzzlesBtn { grid-column:1 / -1; }
+  #seat button { flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:7px 10px; }
+  #seat button .dot { width:13px; height:13px; }
+  #seat button.on { border-color:var(--gold); background:rgba(232,183,90,.16); box-shadow:0 0 0 1px var(--gold) inset; }
+
+  #board { position:fixed; top:max(16px, env(safe-area-inset-top)); right:16px; padding:12px 16px; min-width:240px; }
+  #round { position:fixed; top:max(16px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); padding:7px 18px 8px;
+    display:flex; align-items:baseline; gap:9px; white-space:nowrap; pointer-events:auto; }
+  #round .lbl { font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+  #round b { font-size:24px; line-height:1; color:var(--ink); font-weight:600; min-width:1.2em; text-align:center; font-variant-numeric:tabular-nums; }
+  #round #roundSub { font-size:11.5px; color:var(--dim); }
+  #round.inline { position:static; transform:none; padding:0; gap:5px; background:none; border:0; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
+  #round.inline .lbl { font-size:inherit; letter-spacing:normal; text-transform:none; color:var(--dim); }
+  #round.inline b { font-size:inherit; color:var(--gold); min-width:0; }
+  #round.inline #roundSub { display:none; }
+  #status .tot { color:var(--gold); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .side { display:grid; grid-template-columns: 18px 1fr auto; gap:2px 10px; align-items:center; padding:6px 8px; border-radius:10px; border:1px solid transparent; transition:.25s; }
+  .side.on { border-color:rgba(232,183,90,.55); background:rgba(232,183,90,.09); box-shadow:0 0 18px rgba(232,183,90,.15) inset; }
+  .dot { width:16px; height:16px; border-radius:50%; box-shadow:0 1px 3px rgba(0,0,0,.6), inset 0 -2px 3px rgba(0,0,0,.25); }
+  .dot.w { background:radial-gradient(circle at 35% 30%, #fffaf0, #d9cbb0); }
+  .dot.b { background:radial-gradient(circle at 35% 30%, #6a4630, #140a05); border:1px solid rgba(255,255,255,.15); }
+  .side .nm { font-weight:600; font-size:14px; }
+  .side .sc { font-family:Georgia, serif; font-size:26px; line-height:1; text-align:right; grid-row:span 2; }
+  .side .meta { grid-column:2; font-size:11.5px; color:var(--dim); }
+  #board .foot { display:flex; justify-content:space-between; align-items:center; margin-top:6px; font-size:11px; color:var(--dim); padding:0 8px; }
+  #board .foot b { color:var(--gold); font-weight:600; }
+  /* winning chances (Settings > Display): a split bar, you on the left, the computer on the right */
+  #board .odds { margin-top:8px; padding:0 8px; font-size:11.5px; color:var(--dim); }
+  #board .odds[hidden] { display:none; }
+  #board .odds .ob { display:flex; height:9px; border-radius:5px; overflow:hidden; margin:4px 0 3px; background:rgba(255,255,255,.08); }
+  #board .odds .ob i { display:block; height:100%; transition:width .5s ease; }
+  #board .odds .ob .y { background:#e9d9b4; }
+  #board .odds .ob .c { background:#5c4a3a; margin-left:auto; }
+  #board .odds .ol { display:flex; justify-content:space-between; font-variant-numeric:tabular-nums; }
+  #board .odds .ol b { color:var(--ink); font-weight:600; }
+  #board .odds .om { font-size:10.5px; margin-top:1px; opacity:.85; }
+  #board .odds.busy .ol b { opacity:.55; }
+  /* the question on top, Single / Double side by side on one row, Keep playing under them (every layout) */
+  #cpuQuitAsk { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:8px; font-size:13.5px; text-align:center; }
+  #cpuQuitAsk > span, #cpuQuitAsk #cpuQuitNo { grid-column:1 / -1; justify-self:center; }
+  #cpuQuitAsk b { color:#a8d8b0; }
+  #cpuQuitAsk button { padding:7px 12px; }
+  .link { background:none; border:none; color:var(--dim); text-decoration:underline; padding:0; font-size:11px; cursor:pointer; }
+  .link:hover { color:var(--ink); background:none; }
+
+  #bar { position:fixed; left:50%; transform:translateX(-50%); bottom:max(16px, env(safe-area-inset-bottom));
+    padding:10px 12px; width:min(640px, calc(100vw - 24px)); display:flex; flex-direction:column; gap:8px; align-items:center; }
+  #statusRow { display:flex; align-items:center; gap:10px; min-height:26px; justify-content:center; flex-wrap:wrap; text-align:center; }
+  #status { font-size:14.5px; }
+  #status b { color:var(--gold); }
+  #chips { display:flex; gap:3px; }
+  .chip { font-size:26px; line-height:1; color:#f6eedd; text-shadow:0 1px 4px rgba(0,0,0,.6); transition:opacity .2s; }
+  .chip.used { opacity:.25; }
+  #buttons { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  button { font:inherit; font-size:14px; color:var(--ink); background:rgba(255,235,200,.08); border:1px solid var(--edge); border-radius:10px;
+    padding:9px 16px; cursor:pointer; transition:background .15s, transform .1s, border-color .15s, box-shadow .2s; }
+  button:hover:not(:disabled) { background:rgba(255,235,200,.18); border-color:rgba(255,226,170,.4); }
+  button:active:not(:disabled) { transform:translateY(1px); }
+  button:disabled { opacity:.35; cursor:default; }
+  button.primary { background:linear-gradient(#f0c46e,#d79a32); color:#2a1a06; border-color:#f5d48e; font-weight:600; }
+  button.primary:hover:not(:disabled) { background:linear-gradient(#f7d283,#e0a43c); }
+  button.ready { animation: glow 1.4s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow:0 0 0 3px rgba(240,196,110,.35), 0 0 22px rgba(240,196,110,.45); } }
+  kbd { font-size:10px; opacity:.55; margin-left:6px; border:1px solid currentColor; border-radius:4px; padding:0 4px; }
+  .dots::after { content:''; animation: dots 1.2s steps(4) infinite; }
+  @keyframes dots { 0% { content:''; } 25% { content:'.'; } 50% { content:'..'; } 75% { content:'...'; } }
+
+  #toast { position:fixed; left:50%; bottom:calc(max(16px, env(safe-area-inset-bottom)) + 118px); transform:translate(-50%,8px); opacity:0; pointer-events:none;
+    transition:.25s; background:var(--glass); border:1px solid var(--edge); padding:9px 16px; border-radius:999px; font-size:13px; backdrop-filter: blur(8px);
+    max-width:calc(100vw - 32px); text-align:center; }
+  #toast.show { opacity:1; transform:translate(-50%,0); }
+  #muteBtn { position:fixed; right:16px; bottom:max(16px, env(safe-area-inset-bottom)); padding:9px 12px; }
+  #viewTools { position:fixed; right:16px; bottom:calc(max(16px, env(safe-area-inset-bottom)) + 52px); display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+  /* the retro bulb's pull-chain switch (L): an Edison bulb on a brass socket with a bead chain.
+     Tug = the chain dips and springs back, the bulb sways, the filament stutters on (same timing
+     as the 3D lamp's warm-up flicker in main.js) and a warm halo blooms; off = a cooling afterglow. */
+  #bulbBtn { padding:4px 10px 2px; border-radius:14px; line-height:0; cursor:pointer; transition:box-shadow .6s, border-color .6s; }
+  #bulbBtn svg { width:46px; height:84px; overflow:visible; }
+  #bulbBtn.on { border-color:rgba(255,190,110,.55); box-shadow:0 0 22px rgba(255,170,70,.28), inset 0 0 18px rgba(255,170,70,.10); }
+  #bulbBtn .sway { transform-origin:24px 0; }
+  #bulbBtn.pull .sway { animation:bulb-sway 1.4s cubic-bezier(.3,.6,.4,1); }
+  #bulbBtn.pull .chain { animation:chain-pull .45s cubic-bezier(.3,1.6,.5,1); }
+  #bulbBtn .halo, #bulbBtn .glass-on { opacity:0; transition:opacity .45s; }
+  #bulbBtn .filament { stroke:#6b4a32; transition:stroke .5s; }
+  #bulbBtn.on .halo, #bulbBtn.on .glass-on { opacity:1; }
+  #bulbBtn.on .filament { stroke:#ffd27a; filter:drop-shadow(0 0 1.5px #ffb347) drop-shadow(0 0 4px #ff9a2a); }
+  #bulbBtn.warming .halo, #bulbBtn.warming .glass-on, #bulbBtn.warming .filament { animation:bulb-warm .5s linear; }
+  #bulbBtn.cooling .filament { animation:bulb-cool .7s ease-out; }
+  @keyframes chain-pull { 0% { transform:none; } 35% { transform:translateY(7px); } 70% { transform:translateY(-1.5px); } 100% { transform:none; } }
+  @keyframes bulb-sway { 0% { transform:rotate(0); } 20% { transform:rotate(5deg); } 45% { transform:rotate(-3.5deg); } 70% { transform:rotate(1.8deg); } 100% { transform:rotate(0); } }
+  @keyframes bulb-warm { 0% { opacity:0; } 10% { opacity:.6; } 24% { opacity:.15; } 44% { opacity:.85; } 60% { opacity:.45; } 100% { opacity:1; } }
+  @keyframes bulb-cool { 0% { stroke:#ffd27a; } 12% { stroke:#ff8a3c; } 100% { stroke:#6b4a32; } }
+  /* reduced motion: no swing, no chain dip, no flicker - the glow still fades up and down (transitions) */
+  @media (prefers-reduced-motion: reduce) {
+    #bulbBtn .sway, #bulbBtn .chain, #bulbBtn .halo, #bulbBtn .glass-on, #bulbBtn .filament { animation:none !important; }
+    #bulbBtn .halo, #bulbBtn .glass-on { transition:opacity .6s ease; }
+    #bulbBtn .filament { transition:stroke .6s ease; }
+  }
+  #camBtn { padding:7px 12px; font-size:13px; }
+  #camBtn.on { border-color:rgba(232,183,90,.5); }
+  #dimmerBox { display:flex; align-items:center; gap:8px;
+    padding:7px 12px; border-radius:12px; font-size:12px; color:var(--dim); cursor:default; }
+  #dimmerBox span:first-child { font-size:16px; color:var(--gold); }
+  #dimmer { width:110px; accent-color:var(--gold); cursor:pointer; }
+  #dimmerVal { min-width:34px; text-align:right; font-variant-numeric:tabular-nums; }
+  #help { position:fixed; left:16px; bottom:max(16px, env(safe-area-inset-bottom)); font-size:11.5px; color:var(--dim); max-width:200px; line-height:1.45; pointer-events:none; }
+
+  .modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:16px;
+    background:radial-gradient(ellipse at center, rgba(10,7,5,.25), rgba(10,7,5,.7)); transition:opacity .35s; z-index:5; }
+  .modal.hidden { opacity:0; pointer-events:none; }
+  /* the welcome screen: over the live board, which stays visible (softly blurred) behind it */
+  #hero { z-index:7; background:radial-gradient(ellipse at center, rgba(10,7,5,.28), rgba(10,7,5,.7)); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); }
+  /* behind the welcome card only the board shows: the game's own panels wait until it is dismissed */
+  #brand, #board, #bar, #viewTools, #muteBtn, #help, #round { transition:opacity .3s; }
+  body:has(#hero:not(.hidden)) :is(#brand, #board, #bar, #viewTools, #muteBtn, #help, #round) { opacity:0; pointer-events:none; }
+  .hero-card { max-width:min(560px, 100%); max-height:calc(100vh - 32px); overflow:auto; padding:32px 36px 24px; }
+  .hero-mark { font-size:68px; line-height:1; color:var(--gold); letter-spacing:.02em; text-shadow:0 2px 24px rgba(232,183,90,.35); }
+  .hero-sub { margin:6px 0 16px; font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--dim); }
+  .hero-card .hero-lede { font-size:16px; color:#e6dccb; margin:0 auto 16px; max-width:44ch; }
+  .hero-feats { list-style:none; display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:0 0 22px; padding:0; }
+  .hero-feats li { font-size:12px; padding:4px 11px; border:1px solid var(--edge); border-radius:999px; background:rgba(255,235,200,.06); color:var(--ink); }
+  .hero-cta { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .hero-cta button { padding:11px 22px; font-size:15px; }
+  .hero-cta .primary { min-width:130px; font-size:16px; }
+  .hero-links { margin-top:16px; display:flex; gap:6px 16px; justify-content:center; flex-wrap:wrap; align-items:center; font-size:12px; }
+  .hero-links .web-only { display:contents; }
+  .hero-links a { color:var(--dim); text-decoration:underline; }
+  .hero-links a:hover { color:var(--ink); }
+  .hero-links .link { font-size:12px; }
+  /* short windows (a phone on its side): the card is trimmed to fit */
+  @media (max-height:500px) {
+    .hero-card { padding:14px 22px 12px; }
+    .hero-mark { font-size:40px; }
+    .hero-sub { margin:2px 0 8px; }
+    .hero-card .hero-lede { font-size:13.5px; margin-bottom:8px; }
+    .hero-feats { display:none; }
+    .hero-cta button { padding:8px 16px; font-size:14px; }
+    .hero-links { margin-top:8px; }
+  }
+  #overlay.celebrate { background:radial-gradient(ellipse at center, rgba(10,7,5,.05), rgba(10,7,5,.38)); } /* a win: the confetti still shows around the card */
+  .sheet { padding:26px 30px; max-width:min(460px, 100%); text-align:center; }
+  .sheet h2 { margin:0 0 10px; font-size:30px; font-weight:600; }
+  .sheet p { margin:0 0 16px; color:var(--dim); line-height:1.55; }
+  #rules .sheet { max-width:min(600px, 100%); max-height:calc(100vh - 32px); overflow:auto; text-align:left; }
+  #rules h2 { text-align:center; }
+  #rules ul { padding-left:20px; margin:8px 0 16px; line-height:1.55; color:#e6dccb; font-size:14px; }
+  #rules li { margin-bottom:6px; }
+  #rules h3 { margin:14px 0 4px; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+  #settings .sheet { max-width:min(860px, 100%); max-height:calc(100vh - 32px); overflow:auto; text-align:left; }
+  #settings h2 { text-align:center; }
+  #settings h3 { margin:16px 0 8px; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+  #themeGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px; }
+  #themeGrid .card { display:flex; flex-direction:column; align-items:stretch; gap:4px; padding:8px 8px 10px; text-align:left; position:relative; }
+  #themeGrid canvas { width:100%; height:auto; border-radius:8px; display:block; margin-bottom:4px; }
+  #themeGrid .card.current { border-color:var(--gold); box-shadow:0 0 0 1px var(--gold) inset, 0 0 22px rgba(232,183,90,.2); }
+  #themeGrid .card.current::after { content:'✓'; position:absolute; top:14px; right:14px; width:24px; height:24px; border-radius:50%;
+    background:var(--gold); color:#2a1a06; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  #themeGrid .card.loading { opacity:.6; cursor:progress; }
+  #themeGrid .card.loading::before { content:'Preparing…'; position:absolute; top:14px; left:14px; background:var(--glass); padding:3px 10px; border-radius:999px; font-size:12px; }
+  .cn { font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .tag { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); font-weight:500; border:1px solid var(--edge); border-radius:999px; padding:1px 8px; }
+  .cs { font-size:12px; color:var(--dim); line-height:1.4; }
+  .opt { display:flex; align-items:center; gap:10px; font-size:14px; padding:6px 2px; cursor:pointer; }
+  .opt input { width:18px; height:18px; accent-color:var(--gold); }
+  #settings .row { display:flex; gap:8px; justify-content:center; margin-top:16px; }
+  #games .sheet { max-width:min(720px, 100%); max-height:calc(100vh - 32px); overflow:auto; text-align:left; }
+  #games h2 { text-align:center; }
+  #games h3 { margin:16px 0 8px; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); display:flex; justify-content:space-between; align-items:baseline; }
+  #games .cnt { font-size:11px; letter-spacing:.04em; text-transform:none; color:var(--dim); }
+  #games .row { display:flex; justify-content:center; margin-top:16px; }
+  .grow { display:flex; align-items:center; gap:12px; padding:9px 10px; border:1px solid var(--edge); border-radius:10px; margin-bottom:6px; background:rgba(255,235,200,.04); flex-wrap:wrap; }
+  .grow .gi { flex:1; min-width:200px; }
+  .grow .gn { font-weight:600; font-size:14px; }
+  .grow .gm { font-size:12px; color:var(--dim); margin-top:2px; }
+  .grow .ga { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .grow .ga button { padding:6px 12px; font-size:13px; }
+  .grow.editing input { flex:1; min-width:200px; font:inherit; font-size:14px; color:var(--ink); background:rgba(0,0,0,.3); border:1px solid var(--gold); border-radius:8px; padding:7px 10px; }
+  .grow .warn { font-size:13px; color:#f0b0a0; }
+  button.danger { background:#8a2a20; border-color:#c2554a; color:#fff; }
+  .empty { color:var(--dim); font-size:13px; margin:4px 2px 8px; }
+  button.resign { color:#f0b6a8; border-color:rgba(220,120,100,.35); background:rgba(160,60,40,.12); }
+  button.resign:hover:not(:disabled) { background:rgba(160,60,40,.25); border-color:rgba(230,140,120,.55); }
+  button.slam { color:#ffd2a0; border-color:rgba(240,140,60,.45); background:rgba(200,90,30,.16); font-weight:600; }
+  button.slam:hover:not(:disabled) { background:rgba(220,100,30,.32); border-color:rgba(255,160,80,.7); }
+  .sheet button.slam { margin-left:8px; }
+  #resignAsk { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; font-size:13.5px; }
+  #resignAsk b { color:#f0b6a8; }
+  #resignAsk button { padding:7px 12px; }
+  .frow { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+  .frow .cnt, #settings h3 .cnt { font-size:11px; letter-spacing:.04em; text-transform:none; color:var(--dim); font-weight:400; }
+  #settings h3 { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .vbgbar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px; border:1px dashed var(--edge); border-radius:10px; font-size:12.5px; color:var(--dim); }
+  .vbgbar button { padding:7px 14px; font-size:13px; }
+  .vbgbar span { flex:1; min-width:220px; }
+  #replayBar { position:fixed; left:50%; transform:translateX(-50%); bottom:max(16px, env(safe-area-inset-bottom)); width:min(680px, calc(100vw - 24px));
+    padding:10px 14px; display:flex; flex-direction:column; gap:6px; z-index:3; }
+  #replayBar .rtop { display:flex; justify-content:space-between; gap:10px; font-size:13px; color:var(--dim); }
+  #replayTitle { color:var(--ink); font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #replayMove { font-size:15px; text-align:center; min-height:22px; }
+  #replaySlider { width:100%; accent-color:var(--gold); }
+  #replayBar .rbtns { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+  #replayBar .rbtns button { padding:7px 12px; }
+  button.makis { border-color:rgba(120,200,160,.45); background:rgba(90,170,130,.14); }
+  button.makis:hover:not(:disabled) { background:rgba(90,170,130,.26); border-color:rgba(140,220,180,.6); }
+  /* Android app (body.app): no file downloads; the strategy guide is a full-screen sheet */
+  body.app .web-only { display:none !important; }
+  #stratSheet { position:fixed; inset:0; z-index:60; background:#0b0807; }
+  #stratSheet iframe { width:100%; height:100%; border:0; display:block; }
+  #puzzles .sheet { max-width:min(720px, 100%); max-height:calc(100vh - 32px); overflow:auto; text-align:left; }
+  #puzzles h2 { text-align:center; }
+  #puzzles h3 { margin:16px 0 4px; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); }
+  #puzzles .tier-note { font-size:12px; color:var(--dim); margin:0 0 8px; }
+  #puzzles .row { display:flex; justify-content:center; gap:8px; margin-top:16px; flex-wrap:wrap; }
+  .pz-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:6px; }
+  .pz-tile { text-align:left; padding:7px 10px; font-size:13px; line-height:1.3; }
+  .pz-tile small { display:block; color:var(--dim); font-size:11px; }
+  .pz-tile.solved { border-color:rgba(120,200,160,.55); background:rgba(60,140,100,.16); }
+  .pz-tile.missed { border-color:rgba(230,140,120,.45); }
+  #pzBody { font-size:13.5px; line-height:1.5; }
+  #pzBody p { margin:6px 0; }
+  #pzBody b { color:var(--gold); }
+  /* guided lessons: one numbered dot per lesson (ticked when done), the current one ringed */
+  .ls-nav { display:flex; gap:5px; flex-wrap:wrap; margin:0 0 8px; }
+  .ls-dot { padding:0; width:26px; height:26px; border-radius:50%; font-size:12px; line-height:1; }
+  .ls-dot.on { border-color:var(--gold); background:rgba(232,183,90,.2); box-shadow:0 0 0 1px var(--gold) inset; }
+  .ls-dot.done { border-color:rgba(120,200,160,.55); background:rgba(60,140,100,.16); }
+  .ls-task { border-left:3px solid #6dffa6; padding-left:10px; }
+  #pzBtns [data-act="undo"] { display:none; } /* shown only by a lesson in landscape, where the move strip is hidden */
+  .ls-teach summary { cursor:pointer; color:var(--gold); font-size:11px; letter-spacing:.12em; text-transform:uppercase; margin:2px 0 2px; }
+  .ls-teach[open] summary { opacity:.7; }
+  #pzBody ul { margin:4px 0 6px; padding-left:18px; }
+  /* the actions stay reachable when a long result scrolls the panel */
+  #pzBtns { position:sticky; bottom:-14px; margin:8px -16px -14px; padding:8px 16px 12px; background:rgba(26,18,12,.97); border-top:1px solid var(--edge); }
+  .pz-ok { color:#9be0b8; font-weight:600; }
+  .pz-no { color:#f0b6a8; font-weight:600; }
+  #makis, #review, #puzzle { position:fixed; left:16px; top:50%; transform:translateY(-50%); width:min(380px, calc(100vw - 32px)); max-height:calc(100vh - 220px);
+    overflow:auto; padding:14px 16px; z-index:4; border-color:rgba(120,200,160,.35); }
+  #reviewBody { font-size:13.5px; line-height:1.5; }
+  #reviewBody p { margin:6px 0; }
+  #reviewBody b { color:var(--gold); }
+  .rv-card { border:1px solid var(--edge); border-radius:10px; padding:8px 10px; margin:8px 0; background:rgba(255,235,200,.04); }
+  .rv-top { display:flex; gap:6px; align-items:baseline; flex-wrap:wrap; }
+  .rv-top b { color:var(--ink) !important; }
+  .rv-loss { margin-left:auto; color:#f0b6a8; font-weight:600; font-size:12.5px; }
+  .rv-why { color:var(--dim); font-size:12.5px; margin-top:3px; }
+  .rv-btns { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .rv-btns button { padding:4px 10px; font-size:12.5px; }
+  button.review-btn { color:#bfeed5; border-color:rgba(120,200,160,.4); background:rgba(60,140,100,.14); }
+  button.review-btn:hover:not(:disabled) { background:rgba(60,140,100,.28); }
+  .sheet button.review-btn { margin-left:8px; }
+  .mk-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .mk-avatar { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700;
+    background:radial-gradient(circle at 35% 30%, #9fe0bf, #2f6d50); color:#0d2a1d; box-shadow:0 2px 8px rgba(0,0,0,.4); flex:none; }
+  .mk-name { font-size:18px; font-weight:600; }
+  .mk-sub { font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#8fd3b0; }
+  .mk-x { margin-left:auto; padding:2px 10px; font-size:18px; line-height:1; }
+  #makisBody { font-size:13.5px; line-height:1.5; }
+  #makisBody p { margin:6px 0; }
+  #makisBody ul { margin:4px 0 8px; padding-left:18px; }
+  #makisBody li { margin-bottom:4px; }
+  .mk-move { font-size:15px; }
+  .mk-move b, #makisBody li b { color:var(--gold); }
+  .mk-h { margin-top:10px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#8fd3b0; }
+  .mk-foot { font-size:11.5px; color:var(--dim); margin-top:8px !important; }
+  .mk-btns { display:flex; gap:8px; margin-top:10px; }
+  /* phones: during a puzzle the brand panel and scoreboard are not needed, so the puzzle panel covers
+     them at the top and leaves the board and the move bar free */
+  @media (max-width:700px) { #puzzle { top:max(16px, env(safe-area-inset-top)) !important; bottom:auto !important; transform:none !important; max-height:40vh !important; z-index:6; } }
+  @media (max-width:700px) { #makis, #review { top:auto; bottom:calc(max(16px, env(safe-area-inset-bottom)) + 120px); transform:none; max-height:45vh; } }
+  #veil { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:#0b0807; z-index:9; transition:opacity .6s; }
+  #veil.hidden { opacity:0; pointer-events:none; }
+  #veil .t { font-family:Georgia, serif; font-size:42px; }
+  #veil .s { color:var(--dim); font-size:13px; letter-spacing:.12em; text-transform:uppercase; }
+
+  @media (max-width:900px) { #help { display:none; } }
+  /* phones: everything stacks above and below the board, so every panel is kept to its minimum -
+     the brand panel is one row (title, level, ☰) with the rest in a dropdown, the scoreboard drops
+     the level line the select already shows, and lamp / lock / dimmer share one short row.
+     main.js frames the board in the band left between them (viewBand). */
+  /* compact rules shared by portrait phones and landscape phones */
+  @media (max-width:700px), (max-height:500px) {
+    kbd { display:none; }
+    #brand { padding:6px 8px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; z-index:4; }
+    #brand h1 { font-size:20px; }
+    #brand h1 small { display:none; }
+    #brand .row { margin-top:6px; gap:6px; }
+    #brand #levelRow { margin-top:0; flex:1; min-width:0; flex-wrap:nowrap; }
+    #brand label { display:none; }
+    #menuBtn { display:block; padding:5px 11px; font-size:17px; line-height:1.2; }
+    #menuBtn[aria-expanded="true"] { border-color:var(--gold); background:rgba(232,183,90,.16); }
+    /* absolute, so opening it never changes the brand panel's height (positionHud measures that) */
+    #brandMenu { display:none; position:absolute; left:0; right:0; top:calc(100% + 6px); padding:2px 10px 10px;
+      background:rgba(22,15,10,.94); border:1px solid var(--edge); border-radius:14px; box-shadow:0 14px 50px rgba(0,0,0,.6);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+    #brand.open #brandMenu { display:block; }
+    #brandMenu .row button { flex:1 1 auto; }
+    #seat button, #brand select { padding:6px 8px; }
+    /* top is set from the brand panel's real height by positionHud() in main.js */
+    #board { min-width:0; padding:4px 6px; display:flex; flex-wrap:wrap; gap:2px 4px; }
+    #board .side { flex:1; min-width:0; padding:3px 6px; gap:0 8px; }
+    #board .foot { width:100%; margin-top:0; }
+    #board .odds { width:100%; margin-top:2px; padding:0 4px; }
+    #resetScore { margin-left:auto; }
+    #levelFoot { display:none; }
+    .side .nm { font-size:13px; }
+    .side .meta { font-size:11px; }
+    .side .sc { font-size:20px; }
+    button { padding:8px 11px; }
+    #muteBtn { z-index:2; padding:7px 11px; }
+    #viewTools { align-items:center; gap:6px; }
+    #bulbBtn { padding:2px 7px 1px; border-radius:11px; }
+    #bulbBtn svg { width:22px; height:40px; }
+    #camBtn { padding:8px 10px; }
+    #camBtn .tx { display:none; }
+    #dimmerBox { padding:8px 10px; gap:6px; }
+    #dimmer { width:84px; }
+    #dimmerVal { display:none; }
+    /* the dice in the status line: the 3D dice are small on a phone-sized board */
+    .chip { font-size:34px; }
+  }
+  /* portrait phones: panels stacked above and below the board */
+  @media (max-width:700px) and (min-height:501px) {
+    #brand { width:auto; right:68px; }
+    #board { left:16px; right:16px; }
+    #muteBtn { bottom:auto; top:max(16px, env(safe-area-inset-top)); right:16px; }
+    #viewTools { bottom:calc(max(16px, env(safe-area-inset-bottom)) + 8px); flex-direction:row-reverse; }
+    /* during a game only Roll / Done / Undo show; Hint, Mr. Makis, Admit loss, Computer quits and Slam
+       wait behind ⋯ (the same mechanism as landscape) */
+    #bar #moreBtn { display:block; font-size:19px; min-width:44px; } /* (#bar #: beats the later "#moreBtn {display:none}") */
+    #bar:not(.more) #hintBtn, #bar:not(.more) #makisBtn, #bar:not(.more) #resignBtn, #bar:not(.more) #cpuQuitBtn, #bar:not(.more) #slamBtn { display:none; }
+    #bar.more #moreBtn { border-color:var(--gold); background:rgba(232,183,90,.16); }
+  }
+  /* phones in landscape (or any window under 500 px tall): the board comes first. Closed, only two
+     slim strips sit beside it - ☰ with a mini scoreboard on the left, the move controls on the right
+     (main.js frames the board between them, viewBand). ☰ opens a drawer over the left side with
+     everything else: level, colour, the menu buttons, the full scoreboard and lamp / lock / sound /
+     dimmer. A tap outside, Esc or any menu choice closes it (body.drawer, set by setMenu). */
+  #drawerBack, #moreBtn { display:none; }
+  @media (max-height:500px) {
+    #help { display:none; }
+    /* closed: ☰ alone (the level select moves into the drawer's menu here, see positionHud) */
+    #brand { left:max(8px, env(safe-area-inset-left)); top:max(8px, env(safe-area-inset-top)); right:auto; width:auto; padding:0; display:block; }
+    #brand h1, #brandMenu { display:none; }
+    #menuBtn { position:static; display:block; width:44px; height:44px; padding:0; font-size:20px; background:none; border-color:transparent; }
+    /* the mini scoreboard under it: dot, score, pips for each side (the off count is on the table) */
+    #board { left:max(8px, env(safe-area-inset-left)); right:auto; top:calc(max(8px, env(safe-area-inset-top)) + 52px); width:44px;
+      padding:4px 0; flex-direction:column; flex-wrap:nowrap; gap:2px; cursor:pointer; }
+    #board .side { display:flex; flex-direction:column; align-items:center; flex:none; gap:1px; padding:4px 0; }
+    #board .side .nm, #board .side .of, #board .side .pl, #board .foot, #board .odds { display:none; }
+    #board .dot { width:13px; height:13px; }
+    .side .sc { grid-row:auto; font-size:18px; text-align:center; }
+    .side .meta { font-size:10.5px; white-space:nowrap; }
+    #viewTools { display:none; }
+    /* open: the drawer - menu in a 260 px column, full scoreboard and lamp row in a second one */
+    body.drawer #drawerBack { display:block; position:fixed; inset:0; z-index:3; }
+    #brand.open { width:260px; padding:6px 8px 8px; max-height:calc(100vh - 16px); overflow:auto; }
+    #brand.open h1 { display:block; font-size:19px; line-height:34px; }
+    #brand.open #menuBtn { position:absolute; top:4px; right:4px; width:36px; height:36px; border-color:var(--gold); }
+    #brand.open #brandMenu { display:block; position:static; padding:0; background:none; border:0; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
+    #brandMenu #levelRow { margin-top:4px; }
+    body.drawer #board { left:calc(max(8px, env(safe-area-inset-left)) + 268px); top:max(8px, env(safe-area-inset-top)); width:190px; padding:6px 8px; z-index:4; cursor:default; }
+    body.drawer #board .side { display:grid; grid-template-columns:14px 1fr auto; gap:0 6px; padding:3px 5px; }
+    body.drawer #board .side .nm { display:block; font-size:12.5px; }
+    body.drawer #board .side .of, body.drawer #board .side .pl { display:inline; }
+    body.drawer #board .side .meta { grid-column:2 / -1; }
+    body.drawer #board .foot { display:flex; padding:2px 4px 0; }
+    body.drawer #board .odds:not([hidden]) { display:block; width:100%; padding:0 4px; }
+    #resetScore { padding:4px 0; }
+    body.drawer #viewTools { display:flex; left:calc(max(8px, env(safe-area-inset-left)) + 268px); right:auto; bottom:max(8px, env(safe-area-inset-bottom)); width:190px; z-index:4;
+      flex-direction:row; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:6px 4px; }
+    #dimmerBox { order:3; flex:1 1 100%; min-width:0; padding:7px 8px; gap:6px; }
+    #dimmer { flex:1 1 0; width:0; min-width:0; height:24px; }
+    /* (the sound button sits in the lamp / lock row here - moved by positionHud) */
+    #viewTools #muteBtn { position:static; padding:7px 10px; }
+    #bulbBtn { padding:2px 6px 1px; }
+    /* right strip, 132 px, anchored bottom-right: the status (dice, then the message, never cut), the
+       main action (Roll / Done), Undo and ⋯, which holds Hint / Mr. Makis / Admit loss / Slam */
+    #bar { left:auto; transform:none; right:max(8px, env(safe-area-inset-right)); top:auto;
+      bottom:max(8px, env(safe-area-inset-bottom)); width:132px; padding:8px 7px; gap:6px; max-height:calc(100vh - 16px); overflow-y:auto; overflow-x:hidden; }
+    #statusRow { flex-direction:column; flex-wrap:nowrap; flex-shrink:0; gap:2px; width:100%; }
+    #status { font-size:12.5px; line-height:1.35; overflow-wrap:anywhere; }
+    .chip { font-size:24px; }
+    #buttons { display:grid; grid-template-columns:1fr 1fr; grid-auto-flow:dense; gap:6px; width:100%; flex-shrink:0; }
+    #buttons button { padding:3px 4px; min-width:0; min-height:38px; font-size:13px; line-height:1.12; }
+    #buttons button.primary { grid-column:1 / -1; order:-1; }
+    #moreBtn { display:block; font-size:19px; }
+    #bar:not(.more) #hintBtn, #bar:not(.more) #makisBtn, #bar:not(.more) #resignBtn, #bar:not(.more) #cpuQuitBtn, #bar:not(.more) #slamBtn { display:none; }
+    #bar.more #moreBtn { border-color:var(--gold); background:rgba(232,183,90,.16); }
+    #resignAsk { display:flex; flex-direction:column; gap:6px; font-size:12.5px; }
+    #cpuQuitAsk { gap:6px; font-size:12.5px; }
+    #resignAsk[hidden], #cpuQuitAsk[hidden] { display:none; }
+    #bar.asking #statusRow, #bar.asking #buttons { display:none; }
+    #cpuQuitAsk button, #resignAsk button { padding:5px 6px; min-height:34px; font-size:12.5px; line-height:1.15; }
+    /* the round counter has the top-right corner to itself */
+    #round { left:auto; right:max(8px, env(safe-area-inset-right)); transform:none; padding:5px 12px 6px; }
+    #toast { bottom:max(8px, env(safe-area-inset-bottom)); }
+    /* the replay bar takes the move bar's place, so the board does not move between them */
+    #replayBar { left:auto; transform:none; right:max(8px, env(safe-area-inset-right)); top:auto;
+      bottom:max(8px, env(safe-area-inset-bottom)); width:132px; max-height:calc(100vh - 16px); padding:8px 7px; overflow-y:auto; overflow-x:hidden; }
+    #replayBar .rtop { flex-direction:column; align-items:center; text-align:center; gap:2px; }
+    #replayBar > * { flex-shrink:0; } /* a fixed-height column must not squeeze its rows into each other */
+    #replayBar .rtop { width:100%; }
+    #replayTitle { max-width:100%; font-size:13px; white-space:normal; overflow-wrap:anywhere; }
+    #replayMove { font-size:12.5px; line-height:1.3; min-height:0; }
+    #replayBar .rbtns { display:grid; grid-template-columns:repeat(4, 1fr); grid-auto-flow:dense; gap:5px; }
+    #replayBar .rbtns button { padding:3px 2px; min-width:0; min-height:34px; font-size:13px; line-height:1.1; }
+    #replayBar .rbtns #rpPlay, #replayBar .rbtns #rpExit { grid-column:1 / -1; }
+    #replayBar .rbtns .review-btn { grid-column:span 2; font-size:12px; }
+    #makis, #review, #puzzle { left:calc(max(8px, env(safe-area-inset-left)) + 52px) !important; top:max(8px, env(safe-area-inset-top)) !important;
+      bottom:auto !important; transform:none !important; width:min(300px, 40vw) !important; max-height:calc(100vh - 16px) !important; z-index:6; }
+    /* a lesson takes the move strip's place: its panel on the right (full height), the strip hidden,
+       Undo inside the panel; the board is framed between the ☰ strip and the panel (viewBand) */
+    body.lesson #bar { display:none; }
+    body.lesson #puzzle { left:auto !important; right:max(8px, env(safe-area-inset-right)) !important; width:min(280px, 36vw) !important; }
+    body.lesson #pzBtns [data-act="undo"] { display:inline-block; }
+    .ls-dot { width:23px; height:23px; font-size:11px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="vignette"></div>
+
+<div id="drawerBack"></div>
+<div id="brand" class="panel">
+  <h1 class="serif">Πόρτες<small>PORTES · Greek tavli</small></h1>
+  <div class="row" id="levelRow">
+    <label for="levelSel">Computer opponent</label>
+    <select id="levelSel" title="Computer difficulty"></select>
+    <button id="menuBtn" aria-expanded="false" aria-controls="brandMenu" title="Menu" aria-label="Menu">☰</button>
+  </div>
+  <div id="brandMenu">
+  <div class="row" id="seat" role="group" aria-label="Your colour">
+    <label>You play</label>
+    <button data-color="0" class="on"><span class="dot w"></span>White</button>
+    <button data-color="1"><span class="dot b"></span>Black</button>
+  </div>
+  <div class="row" id="menuRow">
+    <button id="newBtn">New game</button>
+    <button id="learnBtn" title="Nine short guided lessons on the real board, one rule each">Learn</button>
+    <button id="rulesBtn">Rules</button>
+    <button id="strategyBtn" title="Strategy guide (opens in a new tab)">Strategy</button>
+    <button id="settingsBtn" title="Board style, numbers, sound">⚙ Settings</button>
+    <button id="gamesBtn" title="Recent and saved games, replay">Games</button>
+    <button id="puzzlesBtn" title="Find the best move: positions with a proven answer">Puzzles</button>  </div>
+  </div>
+</div>
+
+<div id="round" class="panel" hidden title="Round n = each side's n-th turn (Settings › Round counter)">
+  <span class="lbl">Round</span><b id="roundNum" class="serif">1</b><span id="roundSub"></span>
+</div>
+
+<div id="board" class="panel">
+  <div class="side" id="turnYou">
+    <span class="dot w" id="dotYou"></span><span class="nm">You</span><span class="sc" id="scoreYou">0</span>
+    <span class="meta" title="Pips (distance left to travel)"><span class="pl">Pips </span><b id="pipYou">167</b><span class="of"> · Off <b id="offYou">0</b></span></span>
+  </div>
+  <div class="side" id="turnCpu">
+    <span class="dot b" id="dotCpu"></span><span class="nm">Computer</span><span class="sc" id="scoreCpu">0</span>
+    <span class="meta" title="Pips (distance left to travel)"><span class="pl">Pips </span><b id="pipCpu">167</b><span class="of"> · Off <b id="offCpu">0</b></span></span>
+  </div>
+  <div class="foot"><span id="levelFoot">Level: <b id="levelName"></b></span><b id="matchInfo" hidden></b><button class="link" id="resetScore">reset score</button></div>
+  <div class="odds" id="odds" hidden title="Estimated chances of winning from the board as it stands, from 300 computer play-outs (Settings › Show winning chances)">
+    <div class="ol"><span>You <b id="oddsYou">–</b></span><span>Computer <b id="oddsCpu">–</b></span></div>
+    <div class="ob"><i class="y" id="oddsBarYou" style="width:50%"></i><i class="c" id="oddsBarCpu" style="width:50%"></i></div>
+    <div class="om" id="oddsMars"></div>
+  </div>
+</div>
+
+<div id="stratSheet" hidden><iframe id="stratFrame" title="Strategy guide"></iframe></div>
+
+<div id="help">Click a glowing checker, then a highlighted point — or drag it there.<br>Camera locked · free camera in Settings.</div>
+<div id="toast"></div>
+
+<div id="bar" class="panel">
+  <div id="statusRow"><span id="chips"></span><span id="status">Setting up the board…</span></div>
+  <div id="buttons">
+    <button id="rollBtn" class="primary">Roll dice<kbd>Space</kbd></button>
+    <button id="undoBtn" hidden>Undo<kbd>U</kbd></button>
+    <button id="hintBtn" hidden>Hint<kbd>H</kbd></button>
+    <button id="makisBtn" class="makis" hidden title="Mr. Makis shows what a level-10 player would do, and why">Mr. Makis<kbd>M</kbd></button>
+    <button id="doneBtn" class="primary" hidden>Done<kbd>Enter</kbd></button>
+    <button id="resignBtn" class="resign" hidden title="Concede this game as a single (1 point) or double (2 points) loss">Admit loss</button>
+    <button id="cpuQuitBtn" class="resign" hidden title="Make the computer quit this game: you win 1 point (single) or 2 points (double)">Computer quits</button>
+    <button id="slamBtn" class="slam" hidden title="Angry? Slam the board shut. Just for fun: the game carries on exactly where it was">Slam!<kbd>S</kbd></button>
+    <button id="moreBtn" hidden aria-expanded="false" title="More: Hint, Mr. Makis, Admit loss, Computer quits, Slam" aria-label="More actions">⋯</button>
+  </div>
+  <div id="resignAsk" hidden>
+    <span>Admit the loss? Choose what the computer scores:</span>
+    <button id="resignSingle" class="danger">Single loss (1 point)</button>
+    <button id="resignDouble" class="danger">Double loss (2 points)</button>
+    <button id="resignNo">Keep playing</button>
+  </div>
+  <div id="cpuQuitAsk" hidden>
+    <span>Make the computer quit? Choose what you score:</span>
+    <button id="cpuQuitSingle" class="danger" title="Single win: you score 1 point">Single (1 pt)</button>
+    <button id="cpuQuitDouble" class="danger" title="Double win: you score 2 points">Double (2 pts)</button>
+    <button id="cpuQuitNo">Keep playing</button>
+  </div>
+</div>
+<button id="muteBtn" class="panel" title="Sound">🔊</button>
+<div id="viewTools">
+  <button id="bulbBtn" class="panel" title="Retro lamp — pull the chain (L)" aria-label="Retro lamp" aria-pressed="false">
+    <svg viewBox="0 0 48 88" aria-hidden="true">
+      <defs>
+        <radialGradient id="bulbHalo"><stop offset="0" stop-color="#ffd58a" stop-opacity=".85"/><stop offset=".45" stop-color="#ffab45" stop-opacity=".35"/><stop offset="1" stop-color="#ff8a20" stop-opacity="0"/></radialGradient>
+        <linearGradient id="bulbBrass" x1="0" x2="1"><stop offset="0" stop-color="#7a5622"/><stop offset=".45" stop-color="#e9c47a"/><stop offset="1" stop-color="#6d4a1c"/></linearGradient>
+        <radialGradient id="bulbGlassOff" cx=".4" cy=".35"><stop offset="0" stop-color="#e8e4dc" stop-opacity=".22"/><stop offset="1" stop-color="#9a8e80" stop-opacity=".10"/></radialGradient>
+        <radialGradient id="bulbGlassOn" cx=".5" cy=".55"><stop offset="0" stop-color="#fff2c8" stop-opacity=".95"/><stop offset=".5" stop-color="#ffc66a" stop-opacity=".55"/><stop offset="1" stop-color="#ff9a30" stop-opacity=".25"/></radialGradient>
+      </defs>
+      <circle class="halo" cx="24" cy="47" r="30" fill="url(#bulbHalo)"/>
+      <rect x="19" y="-2" width="10" height="3" rx="1.2" fill="url(#bulbBrass)"/>
+      <g class="sway">
+        <line x1="24" y1="1" x2="24" y2="13" stroke="#2a1a0e" stroke-width="1.6"/>
+        <rect x="17.5" y="13" width="13" height="13" rx="2" fill="url(#bulbBrass)"/>
+        <path d="M17.5 17h13M17.5 20.5h13M17.5 24h13" stroke="#5a3d14" stroke-width=".7" opacity=".7"/>
+        <path d="M19 26C19 31 10.5 35.5 10.5 47.5C10.5 59.5 17 67 24 67C31 67 37.5 59.5 37.5 47.5C37.5 35.5 29 31 29 26Z" fill="url(#bulbGlassOff)" stroke="rgba(255,240,220,.38)" stroke-width=".8"/>
+        <path class="glass-on" d="M19 26C19 31 10.5 35.5 10.5 47.5C10.5 59.5 17 67 24 67C31 67 37.5 59.5 37.5 47.5C37.5 35.5 29 31 29 26Z" fill="url(#bulbGlassOn)"/>
+        <path d="M21.5 27L20 44M26.5 27L28 44" stroke="#8a7a66" stroke-width=".7"/>
+        <path class="filament" d="M20 44q1-4 2 0t2 0t2 0t2 0" fill="none" stroke-width="1.3" stroke-linecap="round"/>
+        <path d="M15 40q1-6 5-8.5" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.4" stroke-linecap="round"/>
+        <g class="chain">
+          <path d="M30.5 21.5L41 24" stroke="#c9a35a" stroke-width=".7"/>
+          <g fill="url(#bulbBrass)"><circle cx="41" cy="26" r="1.1"/><circle cx="41" cy="30" r="1.1"/><circle cx="41" cy="34" r="1.1"/><circle cx="41" cy="38" r="1.1"/><circle cx="41" cy="42" r="1.1"/><circle cx="41" cy="46" r="1.1"/><circle cx="41" cy="50" r="1.1"/><circle cx="41" cy="54" r="1.1"/><circle cx="41" cy="58" r="1.1"/><circle cx="41" cy="62" r="1.1"/><circle cx="41" cy="66" r="1.1"/><circle cx="41" cy="70" r="1.1"/><circle cx="41" cy="74" r="1.1"/></g>
+          <path d="M41 75.5c-2.4 0-3.2 2.2-3.2 4.2c0 2.8 1.6 4.8 3.2 4.8s3.2-2 3.2-4.8c0-2-.8-4.2-3.2-4.2Z" fill="url(#bulbBrass)" stroke="#5a3d14" stroke-width=".5"/>
+        </g>
+      </g>
+    </svg>
+  </button>
+  <button id="camBtn" class="panel on" title="Allow turning and zooming the board (V)"><span class="ic">🔒</span><span class="tx"> View locked</span></button>
+  <label id="dimmerBox" class="panel" title="Room lighting — [ dimmer, ] brighter">
+    <span aria-hidden="true">☀</span>
+    <input type="range" id="dimmer" min="25" max="160" step="5" value="100" aria-label="Lighting">
+    <span id="dimmerVal">100%</span>
+  </label>
+</div>
+
+<!-- first visit: a short welcome over the live board (portes.seen.v1 remembers it; Rules > About reopens it) -->
+<div id="hero" class="modal" role="dialog" aria-modal="true" aria-labelledby="heroTitle">
+  <div class="sheet panel hero-card">
+    <div class="hero-mark serif" id="heroTitle">Πόρτες</div>
+    <div class="hero-sub">Portes · Greek tavli</div>
+    <p class="hero-lede">The Greek backgammon. Two armies of fifteen race round the board in opposite directions, building <b>doors</b> — points of two or more — that the other side cannot pass. Land on a lone checker and you <b>hit</b> it back to the bar. Bear off all fifteen first; before the computer bears off one and it is a <b>mars</b>, worth double.</p>
+    <ul class="hero-feats">
+      <li>5 computer levels</li><li>Mr. Makis, your coach</li><li>9 guided lessons</li><li>Puzzles</li><li>10 board styles</li>
+    </ul>
+    <div class="hero-cta">
+      <button id="heroPlay" class="primary">Play</button>
+      <button id="heroLearn" title="Nine short lessons on the real board, one rule each">Learn the rules first</button>
+    </div>
+    <div class="hero-links">
+      <button class="link" id="heroRules">Rules</button>
+      <button class="link" id="heroStrategy">Strategy guide</button>
+      <span class="web-only"><a href="https://github.com/mvichosfm/portes" target="_blank" rel="noopener">Source on GitHub</a>
+      <a href="https://github.com/mvichosfm/portes/releases/latest" target="_blank" rel="noopener">Android app</a>
+      <a href="https://plakoto.vichos.org" target="_blank" rel="noopener">Also: Plakoto</a>
+      <a href="https://fevga.vichos.org" target="_blank" rel="noopener">and Fevga</a></span>
+    </div>
+  </div>
+</div>
+
+<div id="overlay" class="modal hidden">
+  <div class="sheet panel">
+    <h2 class="serif" id="ovTitle"></h2>
+    <p id="ovText"></p>
+    <button id="ovNew" class="primary">Play again</button><button id="ovReview" class="review-btn" title="Mr. Makis finds your costliest moves and shows them in replay">Review my mistakes</button><button id="ovSlam" class="slam" title="Just for fun (S)">Slam the board</button>
+  </div>
+</div>
+
+<div id="rules" class="modal hidden">
+  <div class="sheet panel">
+    <h2 class="serif">How to play Portes</h2>
+    <h3>The board</h3>
+    <ul>
+      <li>Portes is the Greek form of backgammon. Each side has 15 checkers, set up as in backgammon: yours are <b>2 on your point 1</b> (top right, deep in the computer's home), <b>5 on 12</b>, <b>3 on 17</b> and <b>5 on 19</b>; the computer's mirror them. Choose white (ivory, the default) or black under <i>You play</i>; you always sit on the same side.</li>
+      <li>The two sides travel in <b>opposite directions</b>. You move right&nbsp;→&nbsp;left along the far side, then left&nbsp;→&nbsp;right along the near side into your home board (bottom right, 19–24), and bear off. The computer comes the other way and its home is your 1–6, top right.</li>
+      <li>Roll two dice and move by each number. Doubles are played four times.</li>
+      <li><b>Who starts:</b> each side throws one die and the higher starts — by rolling again, or (Settings → Play) by playing those two opening dice as the first move.</li>
+    </ul>
+    <h3>Doors and hitting</h3>
+    <ul>
+      <li>A point is <b>closed</b> to you — a <i>door</i> (πόρτα) — when the opponent has <b>two or more</b> checkers on it.</li>
+      <li>Landing on a point with a <b>single</b> opposing checker (a <b>blot</b>) <b>hits</b> it: it goes to the <b>bar</b> in the middle of the board and must start again.</li>
+      <li>One checker can play both dice only by touching down on the point between, so that point must be open; a blot there is hit on the way.</li>
+      <li>Play both dice when you can; if only one can be played, it must be the larger.</li>
+    </ul>
+    <h3>The bar</h3>
+    <ul>
+      <li>A checker on the bar must <b>enter first</b>, into the opponent's home board: for you, a die of 1–6 enters on your point 1–6. Nothing else of yours may move while a checker is on the bar.</li>
+      <li>A closed point cannot be entered. If no die lets you in, the turn is lost.</li>
+    </ul>
+    <h3>Bearing off &amp; scoring</h3>
+    <ul>
+      <li>Once all 15 are in your home board, bear off by exact roll, or with a higher number from your furthest-back point. A checker hit meanwhile must come all the way round again first.</li>
+      <li>First to bear off all 15 wins <b>1 point</b>; a <b>mars</b> (the loser has borne off none) scores <b>2</b>. There is <b>no doubling cube</b> and <b>no triple win</b> (backgammon) in Portes.</li>
+      <li><b>Match play</b> (Settings → Play): games continue until one side reaches <b>5 points</b>.</li>
+    </ul>
+    <h3>Opponents</h3>
+    <ul>
+      <li>1 Beginner – random · 2 Novice – careless pip-counter · 3 Intermediate – hits and builds · 4 Advanced – weighs every risk · 5 Expert – looks at every reply.</li>
+    </ul>
+    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap"><button id="rulesAbout" title="The welcome screen">About</button><button id="rulesLearn" title="Nine short guided lessons on the real board, one rule each">Guided lessons</button><button id="rulesStrategy">Strategy guide</button><button id="closeRules" class="primary">Got it</button></div>
+  </div>
+</div>
+
+<div id="makis" class="panel" hidden>
+  <div class="mk-head">
+    <div class="mk-avatar serif">M</div>
+    <div><div class="mk-name serif">Mr. Makis</div><div class="mk-sub">Level 10 coach</div></div>
+    <button id="makisClose" class="mk-x" title="Close (keeps the move)">×</button>
+  </div>
+  <div id="makisBody"></div>
+  <div class="mk-btns">
+    <button id="makisKeep" class="primary">Keep his move</button>
+    <button id="makisBack">Take it back</button>
+  </div>
+</div>
+
+<div id="review" class="panel" hidden>
+  <div class="mk-head">
+    <div class="mk-avatar serif">M</div>
+    <div><div class="mk-name serif">Mr. Makis</div><div class="mk-sub">Game review</div></div>
+    <button id="reviewClose" class="mk-x" title="Close">×</button>
+  </div>
+  <div id="reviewBody"></div>
+</div>
+
+<div id="puzzle" class="panel" hidden>
+  <div class="mk-head">
+    <div class="mk-avatar serif">?</div>
+    <div><div class="mk-name serif" id="pzTitle">Puzzle</div><div class="mk-sub" id="pzSub"></div></div>
+    <button id="pzExit" class="mk-x" title="Back to your game (Esc)">×</button>
+  </div>
+  <div id="pzBody"></div>
+  <div class="rv-btns" id="pzBtns"></div>
+</div>
+
+<div id="replayBar" class="panel" hidden>
+  <div class="rtop"><span id="replayTitle" class="serif"></span><span id="replayTurn"></span></div>
+  <div id="replayMove"></div>
+  <input type="range" id="replaySlider" min="0" max="0" value="0" aria-label="Move">
+  <div class="rbtns">
+    <button id="rpStart" title="Start (Home)">⏮</button>
+    <button id="rpPrev" title="Previous move (←)">◀</button>
+    <button id="rpPlay" class="primary" title="Play / pause (Space)">▶ Play</button>
+    <button id="rpNext" title="Next move (→)">▶</button>
+    <button id="rpEnd" title="End (End)">⏭</button>
+    <button id="rpReview" class="review-btn" title="Mr. Makis's review: the costliest moves of this game">Mistakes</button>
+    <button id="rpContinue" class="review-btn" title="Play on from the position shown">Continue from here</button>
+    <button id="rpExit" title="Back to your game (Esc)">Exit replay</button>
+  </div>
+</div>
+
+<div id="games" class="modal hidden">
+  <div class="sheet panel">
+    <h2 class="serif">Games</h2>
+    <div id="gamesBody"></div>
+    <input type="file" id="vbgInput" accept=".vbg" hidden>
+    <div class="row"><button id="closeGames" class="primary">Close</button></div>
+  </div>
+</div>
+
+<div id="puzzles" class="modal hidden">
+  <div class="sheet panel">
+    <h2 class="serif">Puzzles</h2>
+    <div id="puzzlesBody"></div>
+    <div class="row"><button id="closePuzzles" class="primary">Close</button></div>
+  </div>
+</div>
+
+<div id="settings" class="modal hidden">
+  <div class="sheet panel">
+    <h2 class="serif">Settings</h2>
+    <h3>Favourites <span class="cnt">level, colour, lighting, view and every setting below, in one click</span></h3>
+    <div id="favList"></div>
+    <div class="vbgbar">
+      <button id="vbsExport" class="web-only" title="Download your setup and favourites as a .vbs file">Export settings (.vbs)</button>
+      <button id="vbsLoad">Load settings (.vbs)…</button>
+      <span>Take your setup and favourites to another browser or share them.</span>
+    </div>
+    <div id="vbsAsk" class="grow" hidden><span id="vbsAskText" class="warn"></span>
+      <div class="ga"><button id="vbsYes" class="primary">Apply</button><button id="vbsNo">Cancel</button></div></div>
+    <input type="file" id="vbsInput" accept=".vbs" hidden>
+    <h3>Board style</h3>
+    <div id="themeGrid"></div>
+    <h3>Play</h3>
+    <label class="opt"><input type="checkbox" id="optAutoEnd"> End my turn automatically after my last move (no Done / Enter)</label>
+    <label class="opt"><input type="checkbox" id="optMatch"> Play a match to 5 points (mars counts 2) — off: single games with a running score</label>
+    <label class="opt"><input type="checkbox" id="optOpening"> Opening throw: the winner plays the two opening dice as the first move (off: the winner rolls again)</label>
+    <h3>Display &amp; sound</h3>
+    <label class="opt"><input type="checkbox" id="optLamp"> Retro lamp light — a warm pool of light from a lamp hanging over the board; the room around it goes dark</label>
+    <label class="opt"><input type="checkbox" id="optNumbers"> Point numbers on the rails</label>
+    <label class="opt"><input type="checkbox" id="optTrails"> Show the computer's last move — glowing arcs and rings from where its checkers left to where they landed, for a few seconds</label>
+    <label class="opt"><input type="checkbox" id="optRound"> Round counter at the top — round 10 is each side's tenth turn, the moment the strategy guide's "after ten turns" figures describe</label>
+    <label class="opt"><input type="checkbox" id="optTotal"> Show the sum of the two dice in the move message — a 6–5 reads "(sum 11)"</label>
+    <label class="opt"><input type="checkbox" id="optOdds"> Show winning chances — your chance and the computer's, estimated from computer play-outs of the board as it stands (updated each turn)</label>
+    <label class="opt"><input type="checkbox" id="optSound"> Sound effects</label>
+    <label class="opt"><input type="checkbox" id="optFreeCam"> Free view — drag to turn the board, scroll to zoom (off: the board stays where it is; also the 🔒 button or V)</label>
+    <div class="row">
+      <button id="settingsView">Reset camera</button>
+      <button id="closeSettings" class="primary">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="veil"><div class="t">Πλακωτό</div><div class="s">Setting up the board</div></div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

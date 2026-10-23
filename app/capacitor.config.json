@@ -1,0 +1,9 @@
+{
+  "appId": "org.vichos.portes",
+  "appName": "Portes",
+  "webDir": "www",
+  "backgroundColor": "#0b0807",
+  "android": {
+    "allowMixedContent": false
+  }
+}
