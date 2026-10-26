@@ -809,7 +809,7 @@ function askReview(type, payload) {
 const sound = new Sound();
 const store = {
   load() { try { return JSON.parse(localStorage.getItem('portes.v1')) || {}; } catch { return {}; } },
-  save() { try { localStorage.setItem('portes.v1', JSON.stringify({ level, score, muted: sound.muted, color: seatColor, theme: themeId, numbers: showNumbers, freeCam, autoEnd, openingPlay, light: lightLevel, match: matchOn, matchScore, view: savedView, lamp: lampOn, round: showRound, total: showTotal, odds: showOdds, trails: showTrails })); } catch { /* private mode */ } },
+  save() { try { localStorage.setItem('portes.v1', JSON.stringify({ level, score, muted: sound.muted, color: seatColor, theme: themeId, numbers: showNumbers, freeCam, autoEnd, quick: quickMove, autoRoll, openingPlay, light: lightLevel, match: matchOn, matchScore, view: savedView, lamp: lampOn, round: showRound, total: showTotal, odds: showOdds, trails: showTrails })); } catch { /* private mode */ } },
 };
 const saved = store.load();
 let level = saved.level >= 1 && saved.level <= 5 ? saved.level : 3;
@@ -829,6 +829,8 @@ const diceLabel = (d) => `<b>${d[0]}–${d[1]}</b>${showTotal ? ` <span class="t
 let freeCam = saved.freeCam === true;
 let savedView = Array.isArray(saved.view) && saved.view.length === 3 ? saved.view : null; // custom camera spot; null = home view
 let autoEnd = saved.autoEnd === true;                          // end the turn without Done (Settings)
+let quickMove = saved.quick === true;                          // a tap plays the higher die at once (Settings)
+let autoRoll = saved.autoRoll === true;                        // throw my dice when the computer has moved (Settings)
 let openingPlay = saved.openingPlay === true;                  // winner plays the opening dice (Settings)
 let lightLevel = saved.light >= 0.25 && saved.light <= 1.6 ? saved.light : 1; // room dimmer
 lampOn = saved.lamp === true;                                   // retro hanging lamp (Settings)
@@ -931,6 +933,14 @@ function chainEnd(path) {
   let at = path[0].from, end = null;
   for (const s of path) { if (s.from === at) { end = s.to; at = s.to; } }
   return end;
+}
+
+// Settings > Quick move: the step a tap on point a plays - the highest die that checker may use
+// (turnSteps has already applied the both-dice / larger-die rules)
+function quickStep(a) {
+  let best = null;
+  for (const s of legal) if (s.from === a && (!best || s.d > best.d)) best = s;
+  return best;
 }
 
 function select(a) {
@@ -1252,6 +1262,9 @@ async function cpuTurn(preset = null) {
   sound.turn();
   setStatus('Your turn — <b>roll the dice</b>');
   updateHud();
+  // Settings > Roll my dice automatically: a short look at the computer's move, then the throw
+  // (a new game, replay or puzzle bumps gid or changes phase, which cancels it)
+  if (autoRoll) wait(0.7).then(() => { if (gid === my && phase === 'human-roll' && !busy) roll(); });
 }
 
 function checkWin() {
@@ -1753,7 +1766,10 @@ canvas.addEventListener('pointerup', (e) => {
   const a = pickPoint(e);
   if (a === null) { select(-1); return; }
   if (selected >= 0 && dests.has(a)) { playPath(dests.get(a)); return; }
-  if (a >= 0 && legalSources().has(a)) { select(a === selected ? -1 : a); return; }
+  if (a >= 0 && legalSources().has(a)) {
+    if (quickMove) { playPath([quickStep(a)]); return; } // one tap = one die, no destination click
+    select(a === selected ? -1 : a); return;
+  }
   if (a >= 0 && stacks[a].some((m) => m.userData.p === HUMAN)) { sound.nope(); toast(blockedReason(a)); }
   select(-1);
 });
@@ -2759,6 +2775,8 @@ function renderSettings() {
   $('optSound').checked = !sound.muted;
   $('optFreeCam').checked = freeCam;
   $('optAutoEnd').checked = autoEnd;
+  $('optQuick').checked = quickMove;
+  $('optAutoRoll').checked = autoRoll;
   $('optOpening').checked = openingPlay;
   $('optMatch').checked = matchOn;
   $('optLamp').checked = lampOn;
@@ -2791,13 +2809,13 @@ const storeFavs = () => { try { localStorage.setItem(FAV_KEY, JSON.stringify(fav
 function snapshotSetup() {
   return {
     level, color: seatColor, light: lightLevel, lamp: lampOn, freeCam, view: freeCam ? null : savedView,
-    theme: themeId, numbers: showNumbers, trails: showTrails, round: showRound, total: showTotal, odds: showOdds, muted: sound.muted, autoEnd, openingPlay, match: matchOn,
+    theme: themeId, numbers: showNumbers, trails: showTrails, round: showRound, total: showTotal, odds: showOdds, muted: sound.muted, autoEnd, quick: quickMove, autoRoll, openingPlay, match: matchOn,
   };
 }
 function favSummary(s) {
   return [themeById(s.theme).name, LEVELS[s.level - 1].name, `plays ${s.color === 1 ? 'black' : 'white'}`,
     `light ${Math.round(s.light * 100)}%${s.lamp ? ' + retro lamp' : ''}`, s.freeCam ? 'free view' : (s.view ? 'view locked (own angle)' : 'view locked'),
-    ...(s.match ? ['match to 5'] : []), ...(s.autoEnd ? ['auto-end turn'] : []), ...(s.openingPlay ? ['plays opening dice'] : []),
+    ...(s.match ? ['match to 5'] : []), ...(s.autoEnd ? ['auto-end turn'] : []), ...(s.quick ? ['quick move'] : []), ...(s.autoRoll ? ['auto-roll'] : []), ...(s.openingPlay ? ['plays opening dice'] : []),
     ...(s.numbers ? [] : ['no point numbers']), ...(s.trails === false ? ['no last-move markers'] : []), ...(s.round ? ['round counter'] : []), ...(s.total ? ['dice sum'] : []), ...(s.odds ? ['winning chances'] : []), ...(s.muted ? ['sound off'] : [])].join(' · ');
 }
 
@@ -2808,7 +2826,7 @@ async function applyFavourite(f) {
   showRound = !!s.round; showTotal = !!s.total; showOdds = !!s.odds; updateOdds();
   showTrails = s.trails !== false; trails.setEnabled(showTrails);
   sound.setMuted(!!s.muted); $('muteBtn').textContent = sound.muted ? '🔇' : '🔊';
-  autoEnd = !!s.autoEnd; openingPlay = !!s.openingPlay;
+  autoEnd = !!s.autoEnd; quickMove = !!s.quick; autoRoll = !!s.autoRoll; openingPlay = !!s.openingPlay;
   if (!!s.match !== matchOn) { matchOn = !!s.match; matchScore = [0, 0]; } // same rule as the switch
   lightLevel = s.light; lampOn = !!s.lamp; applyLamp(); setLight(s.light, false);
   level = s.level; sel.value = level;
@@ -2955,6 +2973,11 @@ $('optAutoEnd').onchange = (e) => {
   autoEnd = e.target.checked; store.save();
   if (autoEnd && phase === 'human-move' && T && turnDone(T) && T.played.length) beginHumanStep(); // a finished move is waiting: end it
 };
+$('optQuick').onchange = (e) => {
+  quickMove = e.target.checked; store.save();
+  if (phase === 'human-move' && !busy && selected >= 0) select(-1); // drop a half-made selection
+};
+$('optAutoRoll').onchange = (e) => { autoRoll = e.target.checked; store.save(); };
 
 // View lock (on-screen 🔒/🔓 button, Settings > Free camera, V key). Locking freezes the board
 // exactly where it is now - it no longer snaps home - and that view is remembered across
