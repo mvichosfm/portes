@@ -107,7 +107,7 @@
 
   #toast { position:fixed; left:50%; bottom:calc(max(16px, env(safe-area-inset-bottom)) + 118px); transform:translate(-50%,8px); opacity:0; pointer-events:none;
     transition:.25s; background:var(--glass); border:1px solid var(--edge); padding:9px 16px; border-radius:999px; font-size:13px; backdrop-filter: blur(8px);
-    max-width:calc(100vw - 32px); text-align:center; }
+    max-width:calc(100vw - 32px); text-align:center; z-index:8; } /* above the sheets (.modal 5, #hero 7), below #veil 9 and #stratSheet 60 */
   #toast.show { opacity:1; transform:translate(-50%,0); }
   #muteBtn { position:fixed; right:16px; bottom:max(16px, env(safe-area-inset-bottom)); padding:9px 12px; }
   #viewTools { position:fixed; right:16px; bottom:calc(max(16px, env(safe-area-inset-bottom)) + 52px); display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
@@ -153,6 +153,10 @@
   /* behind the welcome card only the board shows: the game's own panels wait until it is dismissed */
   #brand, #board, #bar, #viewTools, #muteBtn, #help, #round { transition:opacity .3s; }
   body:has(#hero:not(.hidden)) :is(#brand, #board, #bar, #viewTools, #muteBtn, #help, #round) { opacity:0; pointer-events:none; }
+  /* faded out is not enough: a closed sheet and the panels behind the welcome card also leave the tab order
+     (visibility, switched once the fade-out ends; opening shows them at once, so the fade-in is unchanged) */
+  .modal.hidden { visibility:hidden; transition:opacity .35s, visibility 0s .35s; }
+  body:has(#hero:not(.hidden)) :is(#brand, #board, #bar, #viewTools, #muteBtn, #help, #round) { visibility:hidden; transition:opacity .3s, visibility 0s .3s; }
   .hero-card { max-width:min(560px, 100%); max-height:calc(100vh - 32px); overflow:auto; padding:32px 36px 24px; }
   .hero-mark { font-size:68px; line-height:1; color:var(--gold); letter-spacing:.02em; text-shadow:0 2px 24px rgba(232,183,90,.35); }
   .hero-sub { margin:6px 0 16px; font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--dim); }
@@ -748,6 +752,20 @@
 
 <div id="veil"><div class="t">Πόρτες</div><div class="s">Setting up the board</div></div>
 
+<script id="bootGuard">
+// If start-up fails (no WebGL, a module that did not load, an error while booting) say so
+// on the loading veil instead of leaving it up for ever. Does nothing once the veil is hidden.
+(function () {
+  function fail() {
+    var v = document.getElementById('veil');
+    if (!v || v.classList.contains('hidden')) return;
+    var s = v.querySelector('.s');
+    if (s) s.textContent = 'Could not start the game. Reload the page to try again - if it keeps failing, this browser may not support WebGL.';
+  }
+  window.addEventListener('error', fail, true);
+  window.addEventListener('unhandledrejection', fail);
+})();
+</script>
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.js" } }
 </script>

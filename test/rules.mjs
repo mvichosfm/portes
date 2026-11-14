@@ -368,5 +368,40 @@ ok(absOf(0, 24) === 23 && absOf(1, 1) === 23 && absOf(1, 24) === 0 && absOf(0, 1
   ok(resultText({ result: { winner: 'cpu', points: 1, how: 'off' } }) === 'computer won +1', 'single result text');
 }
 
+// 19. index.html: a start-up failure (no WebGL, a module that did not load) is reported on the loading veil
+{
+  const { readFileSync } = await import('node:fs');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const m = html.match(/<script id="bootGuard">([\s\S]*?)<\/script>/);
+  ok(!!m && html.indexOf(m[0]) < html.indexOf('<script type="importmap">'), 'boot guard present before the modules');
+  if (m) {
+    const handlers = {};
+    let hidden = false;
+    const s = { textContent: 'Setting up the board' };
+    const veil = { classList: { contains: (c) => c === 'hidden' && hidden }, querySelector: (q) => (q === '.s' ? s : null) };
+    new Function('window', 'document', m[1])(
+      { addEventListener: (t, f) => { handlers[t] = f; } },
+      { getElementById: (id) => (id === 'veil' ? veil : null) },
+    );
+    ok(typeof handlers.error === 'function' && typeof handlers.unhandledrejection === 'function', 'boot guard listens for errors and unhandled rejections');
+    hidden = true;
+    if (handlers.error) handlers.error({});
+    ok(s.textContent === 'Setting up the board', 'boot guard does nothing once the veil is hidden');
+    hidden = false;
+    if (handlers.unhandledrejection) handlers.unhandledrejection({});
+    ok(/reload/i.test(s.textContent), 'a failure while the veil is up replaces the loading line with a reload hint');
+  }
+}
+
+// 20. Forced moves: the page plays the turn itself when finalPositions has exactly one play, so
+//     hitting a blot on the way or passing it by must stay two different plays.
+{
+  const quiet = game({ 10: 1 }, { 6: 15 }, { offW: 14 });
+  ok(finalPositions(viewOf(quiet, 0), [3, 1]).length === 1, 'forced: 10/7/6 and 10/9/6 end in the same position, one play');
+  const blot = game({ 10: 1 }, { 6: 14, [S(7)]: 1 }, { offW: 14 });
+  const f = finalPositions(viewOf(blot, 0), [3, 1]);
+  ok(f.length === 2 && f.map((x) => x.opp[25]).sort().join() === '0,1', 'not forced: hitting the blot on the 7 or not are two different plays');
+}
+
 console.log(`${passes} passed, ${fails} failed`);
 process.exit(fails ? 1 : 0);

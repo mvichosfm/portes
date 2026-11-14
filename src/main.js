@@ -898,6 +898,7 @@ function computeDests(from) {
 
 function clearMarks() {
   for (let a = 0; a < 24; a++) { haloMeshes[a].visible = false; destMeshes[a].visible = false; triMeshes[a].visible = false; triMeshes[a].material = mats.tri; }
+  haloMeshes[BAR_HUMAN].visible = false; // the bar's ring too (slot 24 is outside the points loop)
   offDest.visible = false;
   // a lesson keeps its goal points softly lit in green, whatever else is marked
   if (puzzle && puzzle.lesson) for (const s of puzzle.lesson.goal) { const t = triMeshes[A(HUMAN, 25 - s)]; t.material = mats.triGoal; t.visible = true; }
@@ -1272,6 +1273,7 @@ async function cpuTurn(preset = null) {
   if (!steps.length) {
     setStatus(`Computer rolled ${diceLabel(curDice)} — no legal move`);
     await wait(1.4);
+    if (my !== gid) return;
   } else {
     setStatus(`Computer plays ${diceLabel(curDice)}`);
     trails.clear(); // the previous turn's markers make way for this one's
@@ -1593,7 +1595,7 @@ async function hint() {
   beginHumanStep();
   select(hintPath[0].from);
   const n = steps.length;
-  toast(`Suggested play: ${steps.map((s) => `${shown(s.r)}→${s.t ? shown(s.t) : 'off'}`).join(', ')}${n > 1 ? ' · first checker raised, its landing spot in green' : ''}`);
+  toast(`Suggested play: ${steps.map((s) => `${s.r === 25 ? 'bar' : shown(s.r)}→${s.t ? shown(s.t) : 'off'}`).join(', ')}${n > 1 ? ' · first checker raised, its landing spot in green' : ''}`);
 }
 
 // ================================================================ Mr. Makis (level 10 coach)
@@ -1866,7 +1868,7 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
   if (!$('games').classList.contains('hidden')) { if (e.key === 'Escape') { editing = null; $('games').classList.add('hidden'); } return; }
-  if (!$('settings').classList.contains('hidden') && e.key !== 'Escape') return; // no game keys behind the sheet
+  if (e.key !== 'Escape' && ['settings', 'rules', 'puzzles'].some((id) => !$(id).classList.contains('hidden'))) return; // no game keys behind a sheet
   if (phase === 'replay') {
     if (e.key === 'ArrowRight') replayStep();
     else if (e.key === 'ArrowLeft') replayJump(replay.idx - 1);
@@ -1891,8 +1893,8 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === 'l' || e.key === 'L') setLamp(!lampOn);
   else if (e.key === '[') setLight(lightLevel - 0.1);
   else if (e.key === ']') setLight(lightLevel + 0.1);
-  else if (e.key === 'Escape' && puzzle && $('rules').classList.contains('hidden') && $('settings').classList.contains('hidden')) exitPuzzle();
-  else if (e.key === 'Escape') { select(-1); $('rules').classList.add('hidden'); $('settings').classList.add('hidden'); }
+  else if (e.key === 'Escape' && puzzle && $('rules').classList.contains('hidden') && $('settings').classList.contains('hidden') && $('puzzles').classList.contains('hidden')) exitPuzzle();
+  else if (e.key === 'Escape') { select(-1); $('rules').classList.add('hidden'); $('settings').classList.add('hidden'); $('puzzles').classList.add('hidden'); }
 });
 
 $('rollBtn').onclick = roll;
@@ -3245,7 +3247,8 @@ function loop() {
   renderer.render(scene, camera);
   if (shake) camera.position.sub(shake);
 
-  frameMs = frameMs * 0.9 + real * 1000 * 0.1; frameN++;
+  // the sample is clamped like update()'s dt: one long frame (app switch, a long task) cannot lower the resolution, sustained frames over 34 ms still do
+  frameMs = frameMs * 0.9 + Math.min(real, 0.05) * 1000 * 0.1; frameN++;
   if (frameN > 40 && frameN % 30 === 0) {
     const cap = Math.min(window.devicePixelRatio, 1.5);
     if (frameMs > 34 && pixelRatio > 0.6) { pixelRatio = Math.max(0.6, pixelRatio - 0.25); renderer.setPixelRatio(pixelRatio); resize(); }
