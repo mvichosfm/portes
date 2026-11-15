@@ -1058,6 +1058,25 @@ function startGame() {
   setStatus('Roll to see who starts');
   clearMarks();
   updateHud();
+  presetStart();
+}
+
+// The combined Tavli app sets window.TAVLI_FIRST ('you' | 'cpu') during a tournament: the winner
+// of the previous game starts, with no opening throw (record.opening stays null). It is unset
+// everywhere else, where the opening throw decides as before.
+function presetStart() {
+  const first = window.TAVLI_FIRST;
+  if (first === 'you') {
+    phase = 'human-roll';
+    setStatus('You won the last game — you start. <b>Roll the dice</b>');
+    updateHud();
+  } else if (first === 'cpu') {
+    const my = gid;
+    phase = 'cpu'; busy = true; // as in a computer turn: no Roll and no conceding in this pause
+    setStatus('The computer won the last game — it starts');
+    updateHud();
+    wait(2).then(() => { if (my === gid) cpuTurn(); });
+  }
 }
 
 async function roll() {
@@ -2981,6 +3000,24 @@ $('favList').addEventListener('keydown', (e) => {
   else if (e.key === 'Escape') { e.stopPropagation(); favEdit = null; renderFavs(); }
 });
 $('closeSettings').onclick = () => $('settings').classList.add('hidden');
+// Settings categories fold. All closed at first; which ones are open is remembered.
+{
+  const FOLD_KEY = 'portes.fold.v1';
+  const folds = [...document.querySelectorAll('#settings details.fold')];
+  let saved = '[]';
+  try { saved = localStorage.getItem(FOLD_KEY) || '[]'; } catch { /* private mode */ }
+  let open = [];
+  try { open = JSON.parse(saved); } catch { /* junk: all closed */ }
+  for (const d of folds) {
+    d.open = Array.isArray(open) && open.includes(d.dataset.fold);
+    d.addEventListener('toggle', () => {
+      const now = JSON.stringify(folds.filter((x) => x.open).map((x) => x.dataset.fold));
+      if (now === saved) return; // the toggle fired by restoring the saved state
+      saved = now;
+      try { localStorage.setItem(FOLD_KEY, now); } catch { /* private mode */ }
+    });
+  }
+}
 $('optNumbers').onchange = (e) => { showNumbers = e.target.checked; applyNumbers(); store.save(); };
 $('optRound').onchange = (e) => { showRound = e.target.checked; updateRound(); store.save(); };
 $('optTotal').onchange = (e) => {
