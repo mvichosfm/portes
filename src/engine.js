@@ -387,7 +387,7 @@ export const LEVELS = [
 // score, random = chance of a random move, topN = two-ply search over the N best candidates.
 export const LEVEL_CONFIG = {
   2: { W: WEIGHTS.basic, noise: 5, random: 0.12 },
-  3: { W: WEIGHTS.full, noise: 1.5 },
+  3: { W: WEIGHTS.full, noise: 0 },
   4: { W: WEIGHTS.tuned, noise: 0 },
   5: { W: WEIGHTS.tuned, noise: 0, topN: 10 },
 };
